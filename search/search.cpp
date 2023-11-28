@@ -52,8 +52,8 @@ private:
 /*
  * A problem, with all properties:
  * - Initial and goal states;
- * - Actions
- * - Result and cost functions
+ * - Actions;
+ * - Result and cost functions;
  * - h, for informed algorithms.
  */
 template<typename S, typename A>
@@ -150,6 +150,7 @@ std::vector<S> path_states(Node<S, A> node) {
 
 #include <queue>
 #include <functional>
+#include <pair>
 
 using ToDouble = std::function<double(double)>;
 using KeyPair = std::pair<double, double>;
