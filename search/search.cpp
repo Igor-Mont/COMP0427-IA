@@ -150,7 +150,7 @@ std::vector<S> path_states(Node<S, A> node) {
 
 #include <queue>
 #include <functional>
-#include <pair>
+#include <utility>
 
 using ToDouble = std::function<double(double)>;
 using KeyPair = std::pair<double, double>;
@@ -214,4 +214,8 @@ Node<S, A> best_first_search(Problem<S, A> problem, ToDouble f) {
       }
     }
   }
+}
+
+int main() {
+  return 0;
 }
