@@ -1,3 +1,4 @@
+#include <ostream>
 #include <vector>
 #include <memory>
 #include <string>
@@ -28,7 +29,7 @@ struct Node {
       parent{ parent },
       action{ action },
       path_cost{ path_cost },
-      depth{ parent == nullptr ? 0 : parent.depth + 1 } {}
+      depth{ parent == nullptr ? 0 : parent->depth + 1 } {}
 
   bool is_root() const {
     return !parent;
@@ -241,7 +242,23 @@ enum Actions {
 template <typename S, typename A>
 struct EightPuzzle : public Problem<S, A> {
   EightPuzzle(S initial, S goal)
-    : Problem<S, A>(initial, goal) {}
+    : Problem<S, A>(initial, goal) {
+    setIndexes();
+  }
+
+  void setIndexes() {
+    Index index;
+    int i = 0;
+
+    for (int j = 0 ; j < 9; j++) {
+      index.row = updateRow(i, j-1) - 1;
+      index.col = j % 3;
+      int currentValue = this->goal[index.row][index.col];
+      if (currentValue != 0) {
+        indexes[currentValue] = index;
+      }
+    } 
+  }
 
   bool is_goal(const S state) const override {
     return std::equal(state.begin(), state.end(), this->goal.begin());
@@ -299,8 +316,7 @@ struct EightPuzzle : public Problem<S, A> {
     else inversions++;
   }
 
-
-  int getLowerIndex (int& i, int j) {
+  int updateRow(int& i, int j) const {
     if ((j+1) % 3 == 0) {
       return ++i;
     };
@@ -313,23 +329,37 @@ struct EightPuzzle : public Problem<S, A> {
     int inversions = 0;
     for (int j = 0 ; j < 8; j++) {
       auto current = state[i][j%3];
-      auto next = state[getLowerIndex(i, j)][(j+1)%3];
+      auto next = state[updateRow(i, j)][(j+1)%3];
 
       if (current > next and current != 0 and next != 0) {
         inversions++;
       }
     }
 
-    return inversions % 2 ==0;
+    return inversions % 2 == 0;
   }
-
-  double h(Node<S, A> node) const override {
-    int heuristic_value = 0;
+  /* 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
         if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
       }
     }
+  */
+
+  double h(Node<S, A> node) const override {
+    int heuristic_value = 0;
+    Index index;
+
+    for (int i = 0 ; i < 3 ; i++) {
+      for (int j = 0 ; j < 3 ; j++) {
+        auto it = indexes.find(node.state[i][j]); 
+        if(it != indexes.end()) {
+          index = it->second;
+          heuristic_value += abs(index.row - i) + abs(index.col - j);
+        }
+      }
+    }
+
     return heuristic_value;
   }
 
@@ -349,14 +379,15 @@ struct EightPuzzle : public Problem<S, A> {
     zeroIndex.col = -1;
     return zeroIndex;
   }
-
+  
+  std::map<int, Index> indexes;
 };
 
 int main() {
   Matrix initial = {{
-    {1, 4, 6},
-    {2, 0, 7},
-    {3, 5, 8}
+    {7, 2, 4},
+    {5, 0, 6},
+    {8, 3, 1}
   }};
 
   Matrix fake = {{
@@ -366,20 +397,22 @@ int main() {
   }};
 
   Matrix goal = {{
-    {1, 2, 3},
-    {4, 0, 5},
+    {0, 1, 2},
+    {3, 4, 5},
     {6, 7, 8}
 }};
 
   EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
-  std::cout << eightPuzzle.check_solvability(fake) << std::endl;
-
+  //std::cout << eightPuzzle.check_solvability(fake) << std::endl;
+  /*
   std::cout << "Matriz:" << std::endl;
-  for (const auto& linha : matriz) {
+  for (const auto& linha : goal) {
     for (int elemento : linha) {
       std::cout << elemento << " ";
     }
     std::cout << std::endl;
   }
+  */
+  std::cout << eightPuzzle.h(Node<Matrix, Actions>(initial, Actions::UP)) << std::endl;
   return 0;
 }
