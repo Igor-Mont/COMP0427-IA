@@ -41,6 +41,7 @@ struct Node {
   Node<S, A>& get_parent() const {
     return *parent;
   }
+  
   const S state;
   const A action;
   const double path_cost;
@@ -106,7 +107,7 @@ Node<std::string, std::string> failure{ "failure" };
  */
 template <typename S, typename A>
 std::vector<Node<S, A>> expand(Problem<S, A> problem, Node<S, A> node) {
-  auto s = node.s;
+  auto s = node.state;
   std::vector<Node<S, A>> result;
   for (const auto& action : problem.actions(s)) {
     auto new_s = problem.result(s, action);
@@ -208,7 +209,10 @@ Node<S, A> best_first_search(Problem<S, A> problem, ToDouble f) {
       return node;
     for (auto child : expand(problem, node)) {
       auto s = child.state;
-      if (reached.contains(s) or child.path_cost < reached[s].path_cost) {
+      auto finded_state = reached.find(s);
+      bool contains = finded_state != reached.end();
+
+      if (!contains or child.path_cost < reached[s].path_cost) {
         reached[s] = child;
         frontier.push(child);
       }
@@ -216,6 +220,166 @@ Node<S, A> best_first_search(Problem<S, A> problem, ToDouble f) {
   }
 }
 
+#include <array>
+#include <iostream>
+#include <algorithm>
+
+using Matrix = std::array<std::array<int, 3>, 3>;
+
+struct Index {
+  int row;
+  int col;
+};
+
+enum Actions {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+};
+
+template <typename S, typename A>
+struct EightPuzzle : public Problem<S, A> {
+  EightPuzzle(S initial, S goal)
+    : Problem<S, A>(initial, goal) {}
+
+  bool is_goal(const S state) const override {
+    return std::equal(state.begin(), state.end(), this->goal.begin());
+  }
+
+  S result(const S state, const A action) const override {
+    Index blank_index = find_blank_square(state);
+    int i = blank_index.row;
+    int j = blank_index.col;
+    S new_state = state;
+
+    if (action == UP) {
+      new_state[i][j] = state[i+1][j]; 
+      new_state[i+1][j] = 0;
+    }
+    if (action == DOWN) {
+      new_state[i][j] = state[i-1][j]; 
+      new_state[i-1][j] = 0;
+    }
+    if (action == LEFT) {
+      new_state[i][j] = state[i][j-1]; 
+      new_state[i][j-1] = 0;
+    }
+    if (action == RIGHT) {
+      new_state[i][j] = state[i][j+1]; 
+      new_state[i][j+1] = 0;
+    }
+
+    return new_state;
+  }
+
+  std::vector<A> actions(const S state) const override {
+    std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
+    Index indexes = find_blank_square(state);
+
+    if (indexes.row == 0) {
+      possible_actions.erase(possible_actions.begin());
+    }
+    if (indexes.row == 2) {
+      possible_actions.erase(possible_actions.begin() + 1);
+    }
+    if (indexes.col == 0) {
+      possible_actions.erase(possible_actions.begin() + 2);
+    }
+    if (indexes.col == 2) {
+      possible_actions.erase(possible_actions.begin() + 3);
+    }
+
+    return possible_actions;
+  }
+
+  void check_solvability_line(std::array<int, 3>& line, int i, int & global_counter, int & inversions) {
+    if (line[i] <= global_counter || line[i] != 0)
+      global_counter++;
+    else inversions++;
+  }
+
+
+  int getLowerIndex (int& i, int j) {
+    if ((j+1) % 3 == 0) {
+      return ++i;
+    };
+
+    return i;
+  };
+
+  bool check_solvability(S state) {
+    int i = 0;
+    int inversions = 0;
+    for (int j = 0 ; j < 8; j++) {
+      auto current = state[i][j%3];
+      auto next = state[getLowerIndex(i, j)][(j+1)%3];
+
+      if (current > next and current != 0 and next != 0) {
+        inversions++;
+      }
+    }
+
+    return inversions % 2 ==0;
+  }
+
+  double h(Node<S, A> node) const override {
+    int heuristic_value = 0;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
+      }
+    }
+    return heuristic_value;
+  }
+
+  Index find_blank_square(S state) const {
+    Index zeroIndex;
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        if (state[i][j] == 0) {
+          zeroIndex.row = i;
+          zeroIndex.col = j;
+          return zeroIndex;
+        }
+      }
+    }
+
+    zeroIndex.row = -1;
+    zeroIndex.col = -1;
+    return zeroIndex;
+  }
+
+};
+
 int main() {
+  Matrix initial = {{
+    {1, 4, 6},
+    {2, 0, 7},
+    {3, 5, 8}
+  }};
+
+  Matrix fake = {{
+    {1, 2, 3},
+    {4, 6, 5},  // Troque a posição de 5 e 6 para tornar a matriz insolucionável
+    {7, 8, 0}
+  }};
+
+  Matrix goal = {{
+    {1, 2, 3},
+    {4, 0, 5},
+    {6, 7, 8}
+}};
+
+  EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
+  std::cout << eightPuzzle.check_solvability(fake) << std::endl;
+
+  std::cout << "Matriz:" << std::endl;
+  for (const auto& linha : matriz) {
+    for (int elemento : linha) {
+      std::cout << elemento << " ";
+    }
+    std::cout << std::endl;
+  }
   return 0;
 }
