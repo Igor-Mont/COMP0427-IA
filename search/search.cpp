@@ -310,12 +310,6 @@ struct EightPuzzle : public Problem<S, A> {
     return possible_actions;
   }
 
-  void check_solvability_line(std::array<int, 3>& line, int i, int & global_counter, int & inversions) {
-    if (line[i] <= global_counter || line[i] != 0)
-      global_counter++;
-    else inversions++;
-  }
-
   int updateRow(int& i, int j) const {
     if ((j+1) % 3 == 0) {
       return ++i;
@@ -338,6 +332,8 @@ struct EightPuzzle : public Problem<S, A> {
 
     return inversions % 2 == 0;
   }
+
+  // First Heuristic function
   /* 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
