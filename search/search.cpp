@@ -112,7 +112,7 @@ std::vector<Node<S, A>> expand(Problem<S, A> problem, Node<S, A> node) {
   std::vector<Node<S, A>> result;
   for (const auto& action : problem.actions(s)) {
     auto new_s = problem.result(s, action);
-    auto cost = node.path_cost;
+    auto cost = node.path_cost + problem.action_cost(node.state, action, new_s);
     auto parent = std::make_shared<Node<S, A>>(node);
     result.emplace_back(new_s, action, parent, cost);
   }
@@ -154,11 +154,15 @@ std::vector<S> path_states(Node<S, A> node) {
 #include <functional>
 #include <utility>
 
-using ToDouble = std::function<double(double)>;
 using KeyPair = std::pair<double, double>;
 
+template <typename S, typename A>
+using ToDouble = std::function<double(Node<S, A>)>;
+
+
+template <typename S, typename A>
 struct PriorityQueue {
-  PriorityQueue(std::vector<double> items, ToDouble f)
+  PriorityQueue(std::vector<Node<S, A>> items, ToDouble<S, A> f)
     : f{ f }, pq{} {
     for (auto item : items) {
       push(item);
@@ -189,7 +193,7 @@ struct PriorityQueue {
   }
 private:
   std::priority_queue<KeyPair> pq;
-  ToDouble f;
+  ToDouble<S, A> f;
 };
 
 // ---------------------------------------------------------------------------------
@@ -198,9 +202,9 @@ private:
 #include <map>
 
 template <typename S, typename A>
-Node<S, A> best_first_search(Problem<S, A> problem, ToDouble f) {
+Node<S, A> best_first_search(Problem<S, A> problem, ToDouble<S, A> f) {
   auto node = Node<S, A>(problem.initial);
-  auto frontier = PriorityQueue{ { node }, f };
+  auto frontier = PriorityQueue<S, A>{ { node }, f };
   auto reached = std::map<S, Node<S, A>>{ 
     { problem.initial, node }
   };
@@ -342,6 +346,14 @@ struct EightPuzzle : public Problem<S, A> {
     }
   */
 
+  double action_cost(const S state_1, const A action, const S state_2) const override {
+    return 1;
+  }
+
+  double f(Node<S, A> node) const {
+    return h(node) + node.path_cost;
+  }
+
   double h(Node<S, A> node) const override {
     int heuristic_value = 0;
     Index index;
@@ -399,16 +411,7 @@ int main() {
 }};
 
   EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
-  //std::cout << eightPuzzle.check_solvability(fake) << std::endl;
-  /*
-  std::cout << "Matriz:" << std::endl;
-  for (const auto& linha : goal) {
-    for (int elemento : linha) {
-      std::cout << elemento << " ";
-    }
-    std::cout << std::endl;
-  }
-  */
-  std::cout << eightPuzzle.h(Node<Matrix, Actions>(initial, Actions::UP)) << std::endl;
+  ToDouble<Matrix, Actions> testingfn = eightPuzzle.f;
+  Node<Matrix, Actions> test = best_first_search<Matrix, Actions>(eightPuzzle, testingfn); 
   return 0;
 }
