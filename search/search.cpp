@@ -391,6 +391,8 @@ struct EightPuzzle : public Problem<S, A> {
   std::map<int, Index> indexes;
 };
 
+using namespace std::placeholders;
+
 int main() {
   Matrix initial = {{
     {7, 2, 4},
@@ -411,7 +413,8 @@ int main() {
 }};
 
   EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
-  ToDouble<Matrix, Actions> testingfn = eightPuzzle.f;
-  Node<Matrix, Actions> test = best_first_search<Matrix, Actions>(eightPuzzle, testingfn); 
+  auto fp = std::bind(&EightPuzzle<Matrix, Actions>::f, eightPuzzle, _1);
+  Node<Matrix, Actions> test = best_first_search<Matrix, Actions>(eightPuzzle, fp); 
+  
   return 0;
 }
