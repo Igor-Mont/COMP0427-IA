@@ -328,26 +328,26 @@ struct EightPuzzle : public Problem<S, A> {
     return new_state;
   }
 
-std::vector<A> actions(const S state) const override {
-  std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
-  Index indexes = find_blank_square(state);
-  std::cout << "Blank square index: (" << indexes.row << ", " << indexes.col << ")" << std::endl;
+  std::vector<A> actions(const S state) const override {
+    std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
+    Index indexes = find_blank_square(state);
+    std::cout << "Blank square index: (" << indexes.row << ", " << indexes.col << ")" << std::endl;
 
-  if (indexes.row == 0) {
-    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), UP), possible_actions.end());
-  }
-  if (indexes.row == 2) {
-    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), DOWN), possible_actions.end());
-  }
-  if (indexes.col == 0) {
-    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), LEFT), possible_actions.end());
-  }
-  if (indexes.col == 2) {
-    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), RIGHT), possible_actions.end());
-  }
+    if (indexes.row == 0) {
+      possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), UP), possible_actions.end());
+    }
+    if (indexes.row == 2) {
+      possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), DOWN), possible_actions.end());
+    }
+    if (indexes.col == 0) {
+      possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), LEFT), possible_actions.end());
+    }
+    if (indexes.col == 2) {
+      possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), RIGHT), possible_actions.end());
+    }
 
-  std::cout << "Possible actions:";
-  for (const auto& action : possible_actions) {
+    std::cout << "Possible actions:";
+    for (const auto& action : possible_actions) {
     std::cout << " " << action;
   }
   std::cout << std::endl;
@@ -379,15 +379,6 @@ std::vector<A> actions(const S state) const override {
     return inversions % 2 == 0;
   }
 
-  // First Heuristic function
-  /*
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
-      }
-    }
-  */
-
   double action_cost(const S state_1, const A action, const S state_2) const override {
     return 1;
   }
@@ -399,24 +390,26 @@ std::vector<A> actions(const S state) const override {
   double h(Node<S, A> node) const override {
     int heuristic_value = 0;
     Index index;
-
+    
     for (int i = 0 ; i < 3 ; i++) {
       for (int j = 0 ; j < 3 ; j++) {
-        auto it = indexes.find(node.state[i][j]);
+        auto current = node.state[i][j];
+        auto it = indexes.find(current);
         if(it != indexes.end()) {
+          //std::cout << current << " " << index.row << " " << index.col << std::endl; 
           index = it->second;
           heuristic_value += abs(index.row - i) + abs(index.col - j);
         }
       }
     }
-
+    std::cout << "heuristic_value" << heuristic_value << std::endl;
     // for (int i = 0; i < 3; i++) {
     //   for (int j = 0; j < 3; j++) {
     //     if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
     //   }
     // }
 
-    return heuristic_value;
+    return -heuristic_value;
   }
 
   Index find_blank_square(S state) const {
@@ -444,8 +437,8 @@ using namespace std::placeholders;
 
 int main() {
   Matrix initial = {{
-    {7, 2, 0},
-    {5, 6, 4},
+    {7, 2, 4},
+    {5, 0, 6},
     {8, 3, 1}
   }};
 
