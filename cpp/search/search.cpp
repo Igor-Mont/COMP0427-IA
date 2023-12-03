@@ -199,7 +199,9 @@ struct PriorityQueue {
 private:
   std::priority_queue<KeyPair<S, A>> pq;
   ToDouble<S, A> f;
-};// ---------------------------------------------------------------------------------
+};
+
+// ---------------------------------------------------------------------------------
 // Search algorithms: Best-First
 
 #include <map>
@@ -214,27 +216,33 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
 
   while (frontier) {
     std::shared_ptr<Node<S, A>> current_node = frontier.pop();
+    std::cout << "Exploring state:\n";
+    for (const auto& row : current_node->state) {
+      for (const auto& value : row) {
+        std::cout << value << ' ';
+      }
+      std::cout << '\n';
+    }
+
     if (problem.is_goal(current_node->state)) {
-      std::cout << "is goal" << std::endl;
+      std::cout << "Reached goal state\n";
       return current_node;
     }
-    /*
-    for(Node<S, A> child : expand(problem, current_node)) {
-      for(auto x : child.state) {
-        for(auto y : x) {
-          std::cout << y << " ";
-        }
-        std::cout << std::endl;
-      }
-    }
-    */
-    for (auto child : expand(problem, current_node)) {
-      std::cout << "message" << std::endl;
-      auto s = child.state;
+
+    for (const Node<S, A>& child : expand(problem, current_node)) {
+      S s = child.state;
       auto found_state = reached.find(s);
       bool contains = found_state != reached.end();
 
-      if (!contains or child.path_cost < found_state->second->path_cost) {
+      if (!contains || child.path_cost < found_state->second->path_cost) {
+        std::cout << "Adding new state to frontier:\n";
+        for (const auto& row : child.state) {
+          for (const auto& value : row) {
+            std::cout << value << ' ';
+          }
+          std::cout << '\n';
+        }
+
         reached[s] = std::make_shared<Node<S, A>>(child);
         frontier.push(reached[s]);
       }
@@ -284,7 +292,14 @@ struct EightPuzzle : public Problem<S, A> {
   }
 
   bool is_goal(const S state) const override {
-    return std::equal(state.begin(), state.end(), this->goal.begin());
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        if (state[i][j] != this->goal[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   S result(const S state, const A action) const override {
@@ -313,25 +328,33 @@ struct EightPuzzle : public Problem<S, A> {
     return new_state;
   }
 
-  std::vector<A> actions(const S state) const override {
-    std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
-    Index indexes = find_blank_square(state);
+std::vector<A> actions(const S state) const override {
+  std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
+  Index indexes = find_blank_square(state);
+  std::cout << "Blank square index: (" << indexes.row << ", " << indexes.col << ")" << std::endl;
 
-    if (indexes.row == 0) {
-      possible_actions.erase(possible_actions.begin());
-    }
-    if (indexes.row == 2) {
-      possible_actions.erase(possible_actions.begin() + 1);
-    }
-    if (indexes.col == 0) {
-      possible_actions.erase(possible_actions.begin() + 2);
-    }
-    if (indexes.col == 2) {
-      possible_actions.erase(possible_actions.begin() + 3);
-    }
-
-    return possible_actions;
+  if (indexes.row == 0) {
+    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), UP), possible_actions.end());
   }
+  if (indexes.row == 2) {
+    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), DOWN), possible_actions.end());
+  }
+  if (indexes.col == 0) {
+    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), LEFT), possible_actions.end());
+  }
+  if (indexes.col == 2) {
+    possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), RIGHT), possible_actions.end());
+  }
+
+  std::cout << "Possible actions:";
+  for (const auto& action : possible_actions) {
+    std::cout << " " << action;
+  }
+  std::cout << std::endl;
+
+  return possible_actions;
+}
+
 
   int updateRow(int& i, int j) const {
     if ((j+1) % 3 == 0) {
@@ -386,6 +409,12 @@ struct EightPuzzle : public Problem<S, A> {
         }
       }
     }
+
+    // for (int i = 0; i < 3; i++) {
+    //   for (int j = 0; j < 3; j++) {
+    //     if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
+    //   }
+    // }
 
     return heuristic_value;
   }
