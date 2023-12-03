@@ -1,3 +1,4 @@
+#include <iostream>
 #include <ostream>
 #include <vector>
 #include <memory>
@@ -108,13 +109,14 @@ Node<std::string, std::string> failure{ "failure" };
  * Expand a node, generating the children node.
  */
 template <typename S, typename A>
-std::vector<Node<S, A>> expand(Problem<S, A>& problem, Node<S, A> node) {
-  auto s = node.state;
+std::vector<Node<S, A>> expand(Problem<S, A>& problem, std::shared_ptr<Node<S, A>> node) {
+  auto s = node->state;
   std::vector<Node<S, A>> result;
+
   for (const auto& action : problem.actions(s)) {
     auto new_s = problem.result(s, action);
-    auto cost = node.path_cost + problem.action_cost(node.state, action, new_s);
-    auto parent = std::make_shared<Node<S, A>>(node);
+    auto cost = node->path_cost + problem.action_cost(node->state, action, new_s);
+    auto parent = std::shared_ptr<Node<S, A>>(node);
     result.emplace_back(new_s, action, parent, cost);
   }
   return result;
@@ -164,10 +166,10 @@ using ToDouble = std::function<double(const Node<S, A>&)>;
 
 template <typename S, typename A>
 struct PriorityQueue {
-  PriorityQueue(std::vector<Node<S, A>> items, ToDouble<S, A> f)
+  PriorityQueue(std::vector<std::shared_ptr<Node<S, A>>> items, ToDouble<S, A> f)
     : f{ f }, pq{} {
-    for (Node<S, A>& item : items) {
-      push(std::make_shared<Node<S, A>>(item));
+    for (std::shared_ptr<Node<S, A>> item : items) {
+      push(item);
     }
   }
 
@@ -204,19 +206,30 @@ private:
 
 template <typename S, typename A>
 std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S, A> f) {
-  auto initial_node = std::make_shared<Node<S, A>>(problem.initial);
-  auto frontier = PriorityQueue<S, A>{ { *initial_node }, f };
+  std::shared_ptr<Node<S, A>> initial_node = std::make_shared<Node<S, A>>(problem.initial);
+  auto frontier = PriorityQueue<S, A>{ { initial_node }, f };
   auto reached = std::map<S, std::shared_ptr<Node<S, A>>>{
     { problem.initial, initial_node }
   };
 
   while (frontier) {
-    auto current_node = frontier.pop();
+    std::shared_ptr<Node<S, A>> current_node = frontier.pop();
     if (problem.is_goal(current_node->state)) {
+      std::cout << "is goal" << std::endl;
       return current_node;
     }
-
-    for (auto child : expand(problem, *current_node)) {
+    /*
+    for(Node<S, A> child : expand(problem, current_node)) {
+      for(auto x : child.state) {
+        for(auto y : x) {
+          std::cout << y << " ";
+        }
+        std::cout << std::endl;
+      }
+    }
+    */
+    for (auto child : expand(problem, current_node)) {
+      std::cout << "message" << std::endl;
       auto s = child.state;
       auto found_state = reached.find(s);
       bool contains = found_state != reached.end();
@@ -235,7 +248,7 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
 #include <array>
 #include <algorithm>
 
-using Matrix = std::vector<std::vector<int>>;
+using Matrix = std::array<std::array<int, 3>, 3>;
 
 struct Index {
   int row;
@@ -281,12 +294,12 @@ struct EightPuzzle : public Problem<S, A> {
     S new_state = state;
 
     if (action == UP) {
-      new_state[i][j] = state[i+1][j];
-      new_state[i+1][j] = 0;
-    }
-    if (action == DOWN) {
       new_state[i][j] = state[i-1][j];
       new_state[i-1][j] = 0;
+    }
+    if (action == DOWN) {
+      new_state[i][j] = state[i+1][j];
+      new_state[i+1][j] = 0;
     }
     if (action == LEFT) {
       new_state[i][j] = state[i][j-1];
@@ -399,12 +412,11 @@ struct EightPuzzle : public Problem<S, A> {
 
 using namespace std::placeholders;
 
-#include <iostream>
 
 int main() {
   Matrix initial = {{
-    {7, 2, 4},
-    {5, 0, 6},
+    {7, 2, 0},
+    {5, 6, 4},
     {8, 3, 1}
   }};
 
@@ -429,9 +441,8 @@ int main() {
   // Verifica se o caminho foi encontrado
   if (test) {
     std::cout << "Caminho encontrado:\n";
-    // Imprime a matriz do nó de destino
-    for (const auto& row : test->state) {
-      for (const auto& value : row) {
+    for (auto row : test->state) {
+      for (auto value : row) {
         std::cout << value << ' ';
       }
       std::cout << '\n';
