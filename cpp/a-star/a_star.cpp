@@ -1,7 +1,13 @@
 #include <iostream>
+#include <array>
+#include <algorithm>
 #include <ostream>
-#include <vector>
+#include <queue>
+#include <functional>
+#include <utility>
 #include <memory>
+#include <vector>
+#include <map>
 #include <string>
 
 // ---------------------------------------------------------------------------------
@@ -102,9 +108,6 @@ struct Problem {
 private:
 };
 
-// Indicates an algorithm couldn't find a solution.
-Node<std::string, std::string> failure{ "failure" };
-
 /*
  * Expand a node, generating the children node.
  */
@@ -153,11 +156,6 @@ std::vector<S> path_states(Node<S, A> node) {
 // ---------------------------------------------------------------------------------
 // Priority queue
 
-#include <queue>
-#include <functional>
-#include <utility>
-#include <memory>
-
 template <typename S, typename A>
 using KeyPair = std::pair<double, std::shared_ptr<Node<S, A>>>;
 
@@ -204,8 +202,6 @@ private:
 // ---------------------------------------------------------------------------------
 // Search algorithms: Best-First
 
-#include <map>
-
 template <typename S, typename A>
 std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S, A> f) {
   std::shared_ptr<Node<S, A>> initial_node = std::make_shared<Node<S, A>>(problem.initial);
@@ -214,18 +210,9 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
     { problem.initial, initial_node }
   };
 
-  while (frontier) {
+  while (frontier) {  // overloaded bool conversion
     std::shared_ptr<Node<S, A>> current_node = frontier.pop();
-    std::cout << "Exploring state:\n";
-    for (const auto& row : current_node->state) {
-      for (const auto& value : row) {
-        std::cout << value << ' ';
-      }
-      std::cout << '\n';
-    }
-
     if (problem.is_goal(current_node->state)) {
-      std::cout << "Reached goal state\n";
       return current_node;
     }
 
@@ -235,14 +222,6 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
       bool contains = found_state != reached.end();
 
       if (!contains || child.path_cost < found_state->second->path_cost) {
-        std::cout << "Adding new state to frontier:\n";
-        for (const auto& row : child.state) {
-          for (const auto& value : row) {
-            std::cout << value << ' ';
-          }
-          std::cout << '\n';
-        }
-
         reached[s] = std::make_shared<Node<S, A>>(child);
         frontier.push(reached[s]);
       }
@@ -252,9 +231,6 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
   return nullptr;  // Indica que não foi encontrado um caminho
 }
 
-
-#include <array>
-#include <algorithm>
 
 using Matrix = std::array<std::array<int, 3>, 3>;
 
@@ -331,7 +307,6 @@ struct EightPuzzle : public Problem<S, A> {
   std::vector<A> actions(const S state) const override {
     std::vector<A> possible_actions = { UP, DOWN, LEFT, RIGHT };
     Index indexes = find_blank_square(state);
-    std::cout << "Blank square index: (" << indexes.row << ", " << indexes.col << ")" << std::endl;
 
     if (indexes.row == 0) {
       possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), UP), possible_actions.end());
@@ -345,14 +320,7 @@ struct EightPuzzle : public Problem<S, A> {
     if (indexes.col == 2) {
       possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), RIGHT), possible_actions.end());
     }
-
-    std::cout << "Possible actions:";
-    for (const auto& action : possible_actions) {
-    std::cout << " " << action;
-  }
-  std::cout << std::endl;
-
-  return possible_actions;
+    return possible_actions;
 }
 
 
@@ -396,19 +364,11 @@ struct EightPuzzle : public Problem<S, A> {
         auto current = node.state[i][j];
         auto it = indexes.find(current);
         if(it != indexes.end()) {
-          //std::cout << current << " " << index.row << " " << index.col << std::endl; 
           index = it->second;
           heuristic_value += abs(index.row - i) + abs(index.col - j);
         }
       }
     }
-    std::cout << "heuristic_value" << heuristic_value << std::endl;
-    // for (int i = 0; i < 3; i++) {
-    //   for (int j = 0; j < 3; j++) {
-    //     if(node.state[i][j] == this->goal[i][j]) heuristic_value++;
-    //   }
-    // }
-
     return -heuristic_value;
   }
 
@@ -432,47 +392,4 @@ struct EightPuzzle : public Problem<S, A> {
   std::map<int, Index> indexes;
 };
 
-using namespace std::placeholders;
-
-
-int main() {
-  Matrix initial = {{
-    {7, 2, 4},
-    {5, 0, 6},
-    {8, 3, 1}
-  }};
-
-  Matrix fake = {{
-    {1, 2, 3},
-    {4, 6, 5},  // Troque a posição de 5 e 6 para tornar a matriz insolucionável
-    {7, 8, 0}
-  }};
-
-  Matrix goal = {{
-    {0, 1, 2},
-    {3, 4, 5},
-    {6, 7, 8}
-  }};
-
-  EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
-  auto fp = std::bind(&EightPuzzle<Matrix, Actions>::f, eightPuzzle, _1);
-
-  // Use std::shared_ptr<Node<Matrix, Actions>> para representar o resultado
-  std::shared_ptr<Node<Matrix, Actions>> test = best_first_search<Matrix, Actions>(eightPuzzle, fp);
-
-  // Verifica se o caminho foi encontrado
-  if (test) {
-    std::cout << "Caminho encontrado:\n";
-    for (auto row : test->state) {
-      for (auto value : row) {
-        std::cout << value << ' ';
-      }
-      std::cout << '\n';
-    }
-  } else {
-    std::cout << "Caminho não encontrado.\n";
-  }
-
-  return 0;
-}
 
