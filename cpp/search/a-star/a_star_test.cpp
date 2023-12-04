@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
-#include "../catch.hpp"
+#include "../../catch.hpp"
 
-#include "search.cpp"
+#include "a_star.cpp"
 
 TEST_CASE("A* can solve valid 8 Puzzle") {
   using namespace std::placeholders;
@@ -19,8 +19,8 @@ TEST_CASE("A* can solve valid 8 Puzzle") {
 
   EightPuzzle<Matrix, Actions> eightPuzzle(initial, goal);
   auto fp = std::bind(&EightPuzzle<Matrix, Actions>::f, eightPuzzle, _1);
-  std::shared_ptr<Node<Matrix, Actions>> test = best_first_search<Matrix, Actions>(eightPuzzle, fp);
 
+  std::shared_ptr<Node<Matrix, Actions>> test = best_first_search<Matrix, Actions>(eightPuzzle, fp);
   REQUIRE(eightPuzzle.is_goal(test->state));
 }
 
