@@ -97,6 +97,16 @@ struct Problem {
     return 0;
   }
 
+  /*
+   * For optimization problems (hill climbing, gradient descent, simulated annealing...) each state
+   * has an associated value which can be {max,min}imized.
+   *
+   * This is not set as pure (= 0) because not all problems are optimization problems.
+   */
+  virtual double value(S state) const {
+    throw std::logic_error{ "Function not yet implemented" };
+  }
+
   S initial;
   S goal;
 private:
