@@ -13,3 +13,7 @@
 Os testes foram feitos usando [Catch2](https://github.com/catchorg/Catch2/tree/v2.x).
 Uma simples compilação dos arquivos de teste (`_test.cpp`) já deve conter tudo
 que é necessário para executar.
+
+## Relatórios
+
+Os relatórios estão disponíveis [aqui](https://drive.google.com/drive/folders/1LdHEmDhmT2wmy3cfmbXGq-Bl9ju-VQab?usp=sharing).
