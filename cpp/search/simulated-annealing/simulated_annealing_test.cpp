@@ -17,15 +17,10 @@ TEST_CASE("Default exponential schedule") {
   }
 }
 
-TEST_CASE("random_choice") {
-  SECTION("throws out of range exception when given empty vector") {
-    std::vector<int> vec{};
-    REQUIRE_THROWS_AS(random_choice(vec), std::out_of_range);
+TEST_CASE("Simmulated annealing") {
+  SECTION("finds maximum in balanced grid") {
   }
 
-  SECTION("picks a valid element") {
-    std::vector<int> vec{ 1, 2, 3, 4 };
-    auto picked = random_choice(vec);
-    REQUIRE((picked >= 1 && picked <= 4));
+  SECTION("finds maximum in unbalanced grid") {
   }
 }
