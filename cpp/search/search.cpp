@@ -1,5 +1,6 @@
 #include <memory>
 #include <functional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <queue>
