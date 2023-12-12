@@ -23,7 +23,7 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
       return current_node;
     }
 
-    for (const Node<S, A>& child : expand(problem, current_node)) {
+    for (const Node<S, A>& child : expand(problem, *current_node)) {
       S s = child.state;
       auto found_state = reached.find(s);
       bool contains = found_state != reached.end();
