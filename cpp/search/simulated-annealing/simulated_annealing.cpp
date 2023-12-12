@@ -146,16 +146,3 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   ActionTable defined_actions;
   Grid grid;
 };
-
-int main() {
-  std::vector<double> sols;
-  PeakFindingProblem prob{ 
-    {0, 0},
-    {{ 0, 5, 10, 20},
-     {-3, 7, 11, 5}}
-  };
-  for (size_t i{}; i < 100; i++) {
-    sols.push_back(prob.value(simulated_annealing(prob)));
-  }
-  auto max = std::max_element(sols.begin(), sols.end());
-}
