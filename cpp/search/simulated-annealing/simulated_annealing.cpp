@@ -34,7 +34,7 @@ ScheduleFunction exp_schedule(int k = 20, double lam = 0.005, int limit = 100) {
  * Moving to worst solutions can help to get closer to global optimal solutions.
  */
 template <typename S, typename A>
-S simulated_annealing(Problem<S, A> problem, ScheduleFunction schedule = exp_schedule()) {
+S simulated_annealing(Problem<S, A>& problem, ScheduleFunction schedule = exp_schedule()) {
   Node<S, A> current{ problem.initial };
   for (size_t t{}; t < std::numeric_limits<size_t>::max(); t++) {
     auto T = schedule(t);
@@ -121,7 +121,7 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   /*
    * Moves in the direction specified by action.
    */
-  Index2D result(const Index2D state, const Direction action) {
+  Index2D result(const Index2D state, const Direction action) const {
     // Since find returns a RB-Tree iterator, we need to do some dereferencing.
     auto movement{ *defined_actions.find(action) };
     return pair_sum(state, movement.second);
@@ -147,3 +147,15 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   Grid grid;
 };
 
+int main() {
+  std::vector<double> sols;
+  PeakFindingProblem prob{ 
+    {0, 0},
+    {{ 0, 5, 10, 20},
+     {-3, 7, 11, 5}}
+  };
+  for (size_t i{}; i < 100; i++) {
+    sols.push_back(prob.value(simulated_annealing(prob)));
+  }
+  auto max = std::max_element(sols.begin(), sols.end());
+}
