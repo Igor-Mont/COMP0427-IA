@@ -1,10 +1,12 @@
-#include <random>
+#include <algorithm>
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <ostream>
 #include <vector>
 #include <functional>
-#include <stdexcept>
 #include <cmath>
 #include <map>
-#include <limits>
 #include <assert.h>
 
 #include "../search.cpp"
@@ -35,22 +37,23 @@ ScheduleFunction exp_schedule(int k = 20, double lam = 0.005, int limit = 100) {
  */
 template <typename S, typename A>
 S simulated_annealing(Problem<S, A>& problem, ScheduleFunction schedule = exp_schedule()) {
-  Node<S, A> current{ problem.initial };
+  auto current = std::make_shared<Node<S, A>>(problem.initial);
   for (size_t t{}; t < std::numeric_limits<size_t>::max(); t++) {
     auto T = schedule(t);
     if (T == 0) {
-      return current.state;
+      return current->state;
     }
     auto neighbors = expand(problem, current);
     if (neighbors.empty()) {
-      return current.state;
+      return current->state;
     }
     auto next_choice = random_choice(neighbors);
-    auto delta_e = problem.value(next_choice.state) - problem.value(current.state);
+    auto delta_e = problem.value(next_choice.state) - problem.value(current->state);
     if (delta_e > 0 || probability(std::exp(delta_e / T))) {
-      current = next_choice;
+      current = std::make_shared<Node<S, A>>(next_choice);
     }
-  }
+  } 
+  return current->state;
 }
 
 // ---------------------------------------------------------------------------------
@@ -121,7 +124,7 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   /*
    * Moves in the direction specified by action.
    */
-  Index2D result(const Index2D state, const Direction action) const {
+  Index2D result(const Index2D state, const Direction action) const override {
     // Since find returns a RB-Tree iterator, we need to do some dereferencing.
     auto movement{ *defined_actions.find(action) };
     return pair_sum(state, movement.second);
@@ -146,3 +149,11 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   ActionTable defined_actions;
   Grid grid;
 };
+
+void imprimirSols(const std::vector<double>& sols) {
+    std::cout << "Elementos do vetor sols:" << std::endl;
+
+    for (size_t i = 0; i < sols.size(); ++i) {
+        std::cout << "sols[" << i << "] = " << sols[i] << std::endl;
+    }
+}

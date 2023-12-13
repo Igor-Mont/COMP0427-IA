@@ -117,18 +117,18 @@ private:
  * Expand a node, generating the children node.
  */
 template <typename S, typename A>
-std::vector<Node<S, A>> expand(Problem<S, A>& problem, Node<S, A> node) {
-  auto s = node.state;
+std::vector<Node<S, A>> expand(Problem<S, A>& problem, std::shared_ptr<Node<S, A>> node) {
+  auto s = node->state;
   std::vector<Node<S, A>> result;
+
   for (const auto& action : problem.actions(s)) {
     auto new_s = problem.result(s, action);
-    auto cost = node.path_cost + problem.action_cost(node.state, action, new_s);
-    auto parent = std::shared_ptr<Node<S, A>>(&node);
+    auto cost = node->path_cost + problem.action_cost(node->state, action, new_s);
+    auto parent = std::shared_ptr<Node<S, A>>(node);
     result.emplace_back(new_s, action, parent, cost);
   }
   return result;
 }
-
 /*
  * The sequence of actions to get to this node.
  */
