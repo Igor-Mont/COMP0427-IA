@@ -67,7 +67,6 @@ enum class Direction {
 };
 
 using Grid = std::vector<std::vector<int>>;
-using Index2D = std::pair<int, int>;
 using ActionTable = std::map<Direction, Index2D>;
 
 ActionTable directions4() {

@@ -2,6 +2,9 @@
 #include <functional>
 #include <algorithm>
 #include <vector>
+#include <utility>
+
+using Index2D = std::pair<int, int>;
 
 /*
  * Return true with probability p.
