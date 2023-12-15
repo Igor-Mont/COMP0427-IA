@@ -28,7 +28,7 @@ ActionTable actions = {
 };
 
 template<typename S>
-vector<int> weighted_by(vector<S> population, function<double(const S&)> fitness_fn) {
+vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
   vector<int>population2;
   transform(population.begin(), population.end(), back_inserter(population2), [fitness_fn](S x) {
     return fitness_fn(x); 
@@ -111,14 +111,16 @@ int fitness_fn(S child) {
   int size = child.size();
   for(int i = 0; i < size - 1; i++) {
     for(int j = 1; j < size; j++) {
-      int target = child[i + j];
-      bool at_bounds_upwards = child[i] + j <= size;
-      bool at_bound_downwards = child[i] - j > 0;
-      bool fowardRowCollision = child[i] == target;
-      bool fowardAscendCollision = at_bounds_upwards && child[i] + j == target; 
-      bool fowardDescendCollision = at_bounds_upwards && child[i] - j == target;
-      if(fowardRowCollision || fowardAscendCollision || fowardDescendCollision) {
-        collisions++;
+      if(i+j < size) {
+        int target = child[i + j];
+        bool at_bounds_upwards = child[i] + j <= size;
+        bool at_bounds_downwards = child[i] - j > 0;
+        bool fowardRowCollision = child[i] == target;
+        bool fowardAscendCollision = at_bounds_upwards && child[i] + j == target; 
+        bool fowardDescendCollision = at_bounds_downwards && child[i] - j == target;
+        if(fowardRowCollision || fowardAscendCollision || fowardDescendCollision) {
+          collisions++;
+        }
       }
     }
   }
@@ -127,10 +129,33 @@ int fitness_fn(S child) {
 }
 
 template<typename S>
-vector<S> genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
+bool hasMemberFitEnought(int fit, vector<S> population) {
+  for(S ind : population) {
+    int fitness = fitness_fn<S>(ind);
+    if(fitness == 28) {
+      return true;
+    }
+  }
+  return false;
+}
+
+template<typename S>
+S memberFitEnought(int fit, vector<S> population) {
+  for(S ind : population) {
+    int fitness = fitness_fn<S>(ind);
+    if(fitness == 28) {
+      return ind;
+    }
+  }
+  return population[0];
+}
+
+template<typename S>
+S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents, int fit) {
   int attemptNumber = 0;
+  vector<int> weights; 
   do {
-    vector<int> weights = weighted_by<S>(population, fitness_fn);
+    weights = weighted_by<S>(population, fitness_fn);
     vector<S> new_population; 
     for(int i = 0; i < population.size(); i++) {
       vector<S> result = weights_random_choices<S>(population, weights, parents);
@@ -139,9 +164,9 @@ vector<S> genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, d
       new_population.push_back(child);
     }
     population = new_population;
-  } while(!hasMemberFit(population) && attemptNumber++ < 1000000);
-
-  return population;
+  } while(!hasMemberFitEnought<S>(fit, population) && attemptNumber++ < 1000000);
+  
+  return memberFitEnought(fit, population); 
 }
 
 template<typename S>

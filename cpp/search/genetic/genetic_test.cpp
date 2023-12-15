@@ -1,3 +1,4 @@
+#include <algorithm>
 #define CATCH_CONFIG_MAIN
 #include "../../catch.hpp"
 #include "genetic.cpp"
@@ -47,12 +48,13 @@ TEST_CASE("fitness function") {
   state collision_2 = {8,3,5,3,1,7,4,6};
   state collision_6 = {8,3,4,3,1,7,4,6};
   state collision_28 = {1,2,3,4,5,6,7,8};
+  state collision =  {4, 7, 3, 6, 2, 5, 8, 1}  ;
 
   REQUIRE(fitness_fn<state>(solution) == 28);
   REQUIRE(fitness_fn<state>(collision_2) == 26);
   REQUIRE(fitness_fn<state>(collision_6) == 22);
   REQUIRE(fitness_fn<state>(collision_28) == 0);
-
+  REQUIRE(fitness_fn<state>(collision) == 27);
 }
 // need implement the fitness functions for NQueenProblem
 state solution = {8,2,5,3,1,7,4,6};
@@ -83,20 +85,30 @@ TEST_CASE("weightsr_random_choices function") {
   print_array<int>("secont parent", result[1]);
 }
 
-TEST_CASE("integrate all function") {
-  state solution = {8,2,5,3,1,7,4,6};
-  state collision_2 = {8,3,5,3,1,7,4,6};
-  state collision_6 = {8,3,4,3,1,7,4,6};
-  state collision_28 = {1,2,3,4,5,6,7,8};
+state generateRandomIndividual(int size) {
+  state individual(size, 0);
+  iota(individual.begin(), individual.end(), 1); // Preenche com 1, 2, ..., size
+
+  std::random_shuffle(individual.begin(), individual.end());
+
+  return individual;
+}
+
+vector<state> generateRandomPopulation(int populationSize, int individualSize) {
   vector<state> population;
-  population.push_back(solution);
-  population.push_back(collision_2);
-  population.push_back(collision_6);
-  population.push_back(collision_28);
+  for (int i = 0; i < populationSize; i++) {
+    state individual = generateRandomIndividual(individualSize);
+    population.push_back(individual);
+  }
+  return population;
+}
+
+TEST_CASE("integrate all function") {
+  vector<state> population = generateRandomPopulation(20, 8);
   print_array("test: ", population[0]);
   double probability = 0.1;
   state gene_pool = {1,2,3,4,5,6,7,8};
-  vector<state> result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2);
-
-  for(int i = 0; i < population.size(); i++) print_array("result: ", result[i]);
+  state result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2, 28);
+  REQUIRE(fitness_fn<state>(result) == 28);
+  // print_array("dentro test: ", result);
 }
