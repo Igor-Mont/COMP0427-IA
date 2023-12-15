@@ -1,11 +1,9 @@
 #include "../search.cpp"
-#include <iostream>
 #include "../../utils.cpp"
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
 #include <map>
-#include <array>
 #include <vector>
 
 using namespace std;
@@ -86,7 +84,13 @@ template<typename S>
 S mutate(S child, S gene_pool) {
   int n = rand() % child.size();
   int gene = rand() % gene_pool.size();
+  while(child[n] == gene_pool[gene]) {
+    n = rand() % child.size();
+    gene = rand() % gene_pool.size();
+  };
+
   child[n] = gene_pool[gene];
+
   return child;
 }
 
