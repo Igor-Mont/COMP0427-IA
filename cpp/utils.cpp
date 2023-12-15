@@ -8,8 +8,20 @@
 
 using Index2D = std::pair<int, int>;
 
-template <typename T>
-void print_array(std::string msg, const std::vector<T>& array) {
+template <typename S>
+using Matrix = std::vector<std::vector<S>>;
+
+template <typename S, typename T>
+bool verifyTransform(Matrix<T> matrix, S vector) {
+  for(int i = 0; i < vector.size(); i++) {
+    if(matrix[vector[i]-1][i] != 1) return false;
+  }
+
+  return true;
+}
+
+template <typename S>
+void print_array(std::string msg, const std::vector<S>& array) {
     std::cout << msg << "[ ";
     for (const auto& element : array) {
         std::cout << element << " ";

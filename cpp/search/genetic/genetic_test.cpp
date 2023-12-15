@@ -22,20 +22,53 @@ TEST_CASE("mutate function") {
   REQUIRE(result != queen_positions);
 }
 
-TEST_CASE("reproduce function: ") {
+TEST_CASE("reproduce function") {
   state p1 = {3,2,7,4,8,5,5,2};
   state p2 = {8,1,7,2,6,3,4,2};
 
   state child = reproduce<state>(p1, p2);
   REQUIRE(child.size() == p1.size());
-  print_array("reproduce function", child);
+  print_array("reproduce function: ", child);
 }
 
+TEST_CASE("matrixToVector should return vector that represent the matrix") {
+  Matrix<int> NQueenBoard = {
+    {
+      { 1, 0, 0, 0, 0, 0, 0, 0 },
+      { 0, 0, 0, 0, 0, 0, 0, 0 },
+      { 0, 1, 0, 0, 0, 0, 1, 0 },
+      { 0, 0, 0, 1, 0, 0, 0, 0 },
+      { 0, 0, 0, 0, 0, 1, 0, 0 },
+      { 0, 0, 1, 0, 0, 0, 0, 1 },
+      { 0, 0, 0, 0, 0, 0, 0, 0 },
+      { 0, 0, 0, 0, 1, 0, 0, 0 }
+    }
+  };
+
+  state NQueenVector = matrixToVector<state>(NQueenBoard, 8);
+  print_array("n queen in vector form: ", NQueenVector);
+  
+  REQUIRE(verifyTransform<state, int>(NQueenBoard, NQueenVector));
+}
+
+TEST_CASE("fitness function") {
+  state solution = {8,2,5,3,1,7,4,6};
+  state collision_2 = {8,3,5,3,1,7,4,6};
+  state collision_6 = {8,3,4,3,1,7,4,6};
+  state collision_28 = {1,2,3,4,5,6,7,8};
+
+  REQUIRE(fitness_fn<state>(solution) == 28);
+  REQUIRE(fitness_fn<state>(collision_2) == 26);
+  REQUIRE(fitness_fn<state>(collision_6) == 22);
+  REQUIRE(fitness_fn<state>(collision_28) == 0);
+
+}
 // need implement the fitness functions for NQueenProblem
 
-// TEST_CASE("weighted_by function") {
-//  vector<double> weights = weighted_by<state>(population,  [](const state& x) { return 1.2; });
-// }
+TEST_CASE("weighted_by function") {
+  state indutivual = {8,2,5,3,1,7,4,6};
+  vector<double> weights = weighted_by<state>(population, fitness_fn<state>);
+}
 
 // TEST_CASE("weightsr_random_choices function") {
 //   vector<double> weights;
