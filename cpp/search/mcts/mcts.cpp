@@ -64,7 +64,7 @@ struct Game {
         try {
           auto move = player(*this, state);
           state = result(state, move);
-        } catch (std::exception& e) { }
+        } catch (std::exception& e) {}
 
         if (is_terminal(state)) {
           std::cout << state;
@@ -80,6 +80,13 @@ struct Game {
 
   GameState initial;
 };
+
+// ---------------------------------------------------------------------------------
+// Algorithm.
+
+template <typename S, typename A>
+A monte_carlo_tree_search(S state, GameState game, int N=1000) {
+}
 
 // ---------------------------------------------------------------------------------
 // Players.
