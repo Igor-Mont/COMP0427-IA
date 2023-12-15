@@ -116,6 +116,7 @@ MCT_Node<GameState, A> expand(MCT_Node<GameState, A>& n, Game<A>& game) {
     for (const auto& action : game.actions(n.state)) {
       auto state = game.result(n.state, action);
       auto parent = std::make_shared<MCT_Node<GameState, A>>(n);
+      // TODO: this isn't expanding the n.children map.
       n.children[MCT_Node(state, parent)] = action;
     }
   }
