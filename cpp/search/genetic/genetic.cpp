@@ -28,8 +28,8 @@ ActionTable actions = {
 };
 
 template<typename S>
-vector<double> weighted_by(vector<S> population, function<double(const S&)> fitness_fn) {
-  vector<double>population2;
+vector<int> weighted_by(vector<S> population, function<double(const S&)> fitness_fn) {
+  vector<int>population2;
   transform(population.begin(), population.end(), back_inserter(population2), [fitness_fn](S x) {
     return fitness_fn(x); 
   });
@@ -90,6 +90,7 @@ template<typename S>
 S mutate(S child, S gene_pool) {
   int n = rand() % child.size();
   int gene = rand() % gene_pool.size();
+
   while(child[n] == gene_pool[gene]) {
     n = rand() % child.size();
     gene = rand() % gene_pool.size();
@@ -126,18 +127,21 @@ int fitness_fn(S child) {
 }
 
 template<typename S>
-auto genectic_algoritm(vector<S> population, function<double(S)> fitness, double mutation_chance) {
+vector<S> genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
+  int attemptNumber = 0;
   do {
-    vector<int> weights = weighted_by(population, fitness);
+    vector<int> weights = weighted_by<S>(population, fitness_fn);
     vector<S> new_population; 
-    for(int i = 1; i < population.size(); i++) {
-      pair<S, S> parent1, parent2 = weights_random_choices(population, weights, 2);
-      S child = reproduce(parent1, parent2);
-      if(rand() / static_cast<double>(RAND_MAX) < mutation_chance) child = mutate(child);
+    for(int i = 0; i < population.size(); i++) {
+      vector<S> result = weights_random_choices<S>(population, weights, parents);
+      S child = reproduce<S>(result[0], result[1]);
+      if(rand() / static_cast<double>(RAND_MAX) < mutation_chance) child = mutate<S>(child, gene_pool);
       new_population.push_back(child);
     }
-  }
-  while(1);
+    population = new_population;
+  } while(!hasMemberFit(population) && attemptNumber++ < 1000000);
+
+  return population;
 }
 
 template<typename S>

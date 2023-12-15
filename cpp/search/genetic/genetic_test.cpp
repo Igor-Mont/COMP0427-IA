@@ -5,20 +5,11 @@
 using namespace std;
 using state = vector<int>;
 
-vector<state> population = {
-    {1, 2, 3, 4, 5, 6, 7, 8},
-    {8, 7, 6, 5, 4, 3, 2, 1},
-    {3, 4, 5, 6, 7, 8, 1, 2},
-    {4, 5, 6, 7, 8, 1, 2, 3},
-    {6, 7, 8, 1, 2, 3, 4, 5},
-    {2, 3, 4, 5, 6, 7, 8, 1}
-};
-
 TEST_CASE("mutate function") {
   state queen_positions = {3,2,7,4,8,5,5,2};
   state gene_pool = {1,2,3,4,5,6,7,8};
   srand(time(0));
-  state result = mutate<vector<int>>(queen_positions, gene_pool); 
+  state result = mutate<state>(queen_positions, gene_pool); 
   REQUIRE(result != queen_positions);
 }
 
@@ -64,36 +55,25 @@ TEST_CASE("fitness function") {
 
 }
 // need implement the fitness functions for NQueenProblem
+state solution = {8,2,5,3,1,7,4,6};
+state collision_2 = {8,3,5,3,1,7,4,6};
+state collision_6 = {8,3,4,3,1,7,4,6};
+state collision_28 = {1,2,3,4,5,6,7,8};
+vector<state> population;
 
 TEST_CASE("weighted_by function") {
-  state solution = {8,2,5,3,1,7,4,6};
-  state collision_2 = {8,3,5,3,1,7,4,6};
-  state collision_6 = {8,3,4,3,1,7,4,6};
-  state collision_28 = {1,2,3,4,5,6,7,8};
-  vector<state> population;
   population.push_back(solution);
   population.push_back(collision_2);
   population.push_back(collision_6);
   population.push_back(collision_28);
 
-  vector<double> weights = weighted_by<state>(population, fitness_fn<state>);
-  vector<double> response = {28, 26, 22, 0};
+  vector<int> weights = weighted_by<state>(population, fitness_fn<state>);
+  vector<int> response = {28, 26, 22, 0};
 
   REQUIRE(weights == response);
 }
 
 TEST_CASE("weightsr_random_choices function") {
-  state solution = {8,2,5,3,1,7,4,6};
-  state collision_2 = {8,3,5,3,1,7,4,6};
-  state collision_6 = {8,3,4,3,1,7,4,6};
-  state collision_28 = {1,2,3,4,5,6,7,8};
-  vector<state> population;
-  population.push_back(solution);
-  population.push_back(collision_2);
-  population.push_back(collision_6);
-  population.push_back(collision_28);
-
-
   vector<int> weights = {28, 26, 22, 0};
 
   auto result = weights_random_choices<state>(population, weights, 2);
@@ -101,4 +81,22 @@ TEST_CASE("weightsr_random_choices function") {
 
   print_array<int>("first parent", result[0]);
   print_array<int>("secont parent", result[1]);
+}
+
+TEST_CASE("integrate all function") {
+  state solution = {8,2,5,3,1,7,4,6};
+  state collision_2 = {8,3,5,3,1,7,4,6};
+  state collision_6 = {8,3,4,3,1,7,4,6};
+  state collision_28 = {1,2,3,4,5,6,7,8};
+  vector<state> population;
+  population.push_back(solution);
+  population.push_back(collision_2);
+  population.push_back(collision_6);
+  population.push_back(collision_28);
+  print_array("test: ", population[0]);
+  double probability = 0.1;
+  state gene_pool = {1,2,3,4,5,6,7,8};
+  vector<state> result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2);
+
+  for(int i = 0; i < population.size(); i++) print_array("result: ", result[i]);
 }
