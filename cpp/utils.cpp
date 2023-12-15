@@ -1,11 +1,21 @@
 #include <random>
 #include <functional>
 #include <algorithm>
+#include <string>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 using Index2D = std::pair<int, int>;
 
+template <typename T>
+void print_array(std::string msg, const std::vector<T>& array) {
+    std::cout << msg << "[ ";
+    for (const auto& element : array) {
+        std::cout << element << " ";
+    }
+    std::cout << "]\n";
+}
 /*
  * Return true with probability p.
  */
