@@ -94,6 +94,31 @@ S mutate(S child, S gene_pool) {
   return child;
 }
 
+int fitness_treshold(int size) {
+  return (int)(size * ((size - 1) / 2.0));
+}
+
+template<typename S>
+int fitness_fn(S child) {
+  int collisions = 0;
+  int size = child.size();
+  for(int i = 0; i < size - 1; i++) {
+    for(int j = 1; j < size; j++) {
+      int target = child[i + j];
+      bool at_bounds_upwards = child[i] + j <= size;
+      bool at_bound_downwards = child[i] - j > 0;
+      bool fowardRowCollision = child[i] == target;
+      bool fowardAscendCollision = at_bounds_upwards && child[i] + j == target; 
+      bool fowardDescendCollision = at_bounds_upwards && child[i] - j == target;
+      if(fowardRowCollision || fowardAscendCollision || fowardDescendCollision) {
+        collisions++;
+      }
+    }
+  }
+
+  return fitness_treshold(size) - collisions;
+}
+
 template<typename S>
 auto genectic_algoritm(vector<S> population, function<double(S)> fitness, double mutation_chance) {
   do {
