@@ -196,13 +196,76 @@ struct TicTacToe : Game<Index2D> {
   }
 
   std::vector<Index2D> actions(GameState state) const override  {
-    return {};
+    return state.moves;
   }
+
   GameState result(GameState state, Index2D move) const override {
-    return {};
+    if (not is_in(state.moves, move)) {
+      return state;
+    }
+    auto board = state.board;
+    board[move] =  state.to_move;
+    auto moves = state.moves;
+    remove(moves, move);
+    return GameState{
+      state.to_move == 'X' ? 'O' : 'X',
+      compute_utility(board, move, state.to_move),
+      board,
+      moves
+    };
   }
+
   double utility(GameState state, char player_mark) const override {
-    return {};
+    return player_mark == 'X' ? state.utility : -state.utility;
+  }
+
+  bool is_terminal(GameState state) {
+    return state.utility != 0 or state.moves.size() == 0;
+  }
+
+  void display(GameState state) {
+    auto board = state.board;
+    for (int x = 1; x < h + 1; x++) {
+      for (int y = 1; y < h + 1; y++) {
+        auto it = board.find({ x, y });
+        auto el = it == board.end() ? '.' : it->second;
+        std::cout << el << " ";
+      }
+      std::cout << "\n";
+    }
+  }
+
+  double compute_utility(std::map<Index2D, char> board, Index2D move, char player_mark) const {
+    if (k_in_row(board, move, player_mark, {0, 1}) or
+        k_in_row(board, move, player_mark, {1, 0}) or
+        k_in_row(board, move, player_mark, {1, -1}) or
+        k_in_row(board, move, player_mark, {1, 1})) {
+      return player_mark == 'X' ? 1 : -1;
+    }
+    return 0;
+  }
+
+  bool k_in_row(std::map<Index2D, char> board, Index2D move, char player_mark, Index2D delta_x_y) const {
+    auto [delta_x, delta_y] = delta_x_y;
+    auto [x, y] = move;
+    // number of moves in row.
+    int n = 0;
+
+    while (board.find({ x, y })->second == player_mark) {
+      n += 1;
+      x += delta_x;
+      y += delta_y;
+    }
+    x = move.first;
+    y = move.second;
+
+    while (board.find({ x, y })->second == player_mark) {
+      n += 1;
+      x += delta_x;
+      y += delta_y;
+    }
+    n--; // because we counted move itself twice.
+    return n >= k;
   }
 
   int h;
