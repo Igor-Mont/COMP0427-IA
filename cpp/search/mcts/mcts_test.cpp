@@ -42,7 +42,8 @@ TEST_CASE("Monte Carlo Tree Search") {
       { {1, 2}, {3, 2} }  // O positions
     );
     Index2D expected_move{ 2, 2 };
-    REQUIRE(monte_carlo_tree_search(state, ttt) == expected_move);
+    auto move = monte_carlo_tree_search(state, ttt);
+    REQUIRE(move == expected_move);
   }
 
   SECTION("plays on middle if that is the most likely move") {
@@ -51,7 +52,8 @@ TEST_CASE("Monte Carlo Tree Search") {
       { {1, 2}, {3, 2} }  // O positions
     );
     Index2D expected_move{ 2, 2 };
-    REQUIRE(monte_carlo_tree_search(state, ttt) == expected_move);
+    auto move = monte_carlo_tree_search(state, ttt);
+    REQUIRE(move == expected_move);
   }
 
   SECTION("plays to avoid enemy's win") {
@@ -61,7 +63,8 @@ TEST_CASE("Monte Carlo Tree Search") {
       { {1, 2}, {3, 2} }  // O positions
     );
     Index2D expected_move{ 2, 2 };
-    REQUIRE(monte_carlo_tree_search(state, ttt) == expected_move);
+    auto move = monte_carlo_tree_search(state, ttt);
+    REQUIRE(move == expected_move);
   }
 
   SECTION("never loses to a random player in ttt game") {
