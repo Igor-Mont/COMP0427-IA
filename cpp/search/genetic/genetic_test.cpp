@@ -86,10 +86,12 @@ TEST_CASE("weightsr_random_choices function") {
 }
 
 state generateRandomIndividual(int size) {
-  state individual(size, 0);
-  iota(individual.begin(), individual.end(), 1); // Preenche com 1, 2, ..., size
-
-  std::random_shuffle(individual.begin(), individual.end());
+  state individual;
+  
+  for(int i = 0; i < size; i++) {
+    int n = rand() % size;
+    individual.push_back(n);
+  }
 
   return individual;
 }
@@ -105,10 +107,10 @@ vector<state> generateRandomPopulation(int populationSize, int individualSize) {
 
 TEST_CASE("integrate all function") {
   vector<state> population = generateRandomPopulation(20, 8);
-  print_array("test: ", population[0]);
+  for(int i = 0; i < population.size(); i++) print_array("individual ", population[i], i);
   double probability = 0.1;
   state gene_pool = {1,2,3,4,5,6,7,8};
   state result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2, 28);
   REQUIRE(fitness_fn<state>(result) == 28);
-  // print_array("dentro test: ", result);
+  print_array("dentro teste: ", result);
 }
