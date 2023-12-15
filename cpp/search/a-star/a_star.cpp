@@ -23,7 +23,7 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
       return current_node;
     }
 
-    for (const Node<S, A>& child : expand(problem, *current_node)) {
+    for (const Node<S, A>& child : expand(problem, current_node)) {
       S s = child.state;
       auto found_state = reached.find(s);
       bool contains = found_state != reached.end();
@@ -128,8 +128,7 @@ struct EightPuzzle : public Problem<S, A> {
       possible_actions.erase(std::remove(possible_actions.begin(), possible_actions.end(), RIGHT), possible_actions.end());
     }
     return possible_actions;
-}
-
+  }
 
   int updateRow(int& i, int j) const {
     if ((j+1) % 3 == 0) {
@@ -198,5 +197,3 @@ struct EightPuzzle : public Problem<S, A> {
 
   std::map<int, Index> indexes;
 };
-
-
