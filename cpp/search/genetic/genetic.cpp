@@ -108,3 +108,17 @@ auto genectic_algoritm(vector<S> population, function<double(S)> fitness, double
   }
   while(1);
 }
+
+template<typename S>
+S matrixToVector(Matrix<int> matrix, int size) {
+  S nQueens;
+
+  for(int i = 0; i < size; i++) {
+    for(int j = 0; j < size; j++) {
+      if(matrix[j][i] == 1) {
+        nQueens.push_back(j+1);
+      }
+    }
+  }
+  return nQueens;
+}
