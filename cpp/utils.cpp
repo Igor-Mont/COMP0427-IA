@@ -9,7 +9,15 @@
 #include <utility>
 #include <iostream>
 
+/*
+ * Cleaner alias for duples.
+ */
 using Index2D = std::pair<int, int>;
+
+std::ostream& operator<<(std::ostream& os, const Index2D& value) {
+  os << "(" << value.first << ", " << value.second << ")";
+  return os;
+}
 
 template <typename S>
 using Matrix = std::vector<std::vector<S>>;
@@ -23,8 +31,8 @@ bool verifyTransform(Matrix<T> matrix, S vector) {
   return true;
 }
 
-template <typename S>
-void print_array(std::string msg, const std::vector<S>& array) {
+template <typename T>
+void print_array(std::string msg, const std::vector<T>& array) {
     std::cout << msg << "[ ";
     for (const auto& element : array) {
         std::cout << element << " ";
