@@ -66,8 +66,20 @@ TEST_CASE("fitness function") {
 // need implement the fitness functions for NQueenProblem
 
 TEST_CASE("weighted_by function") {
-  state indutivual = {8,2,5,3,1,7,4,6};
+  state solution = {8,2,5,3,1,7,4,6};
+  state collision_2 = {8,3,5,3,1,7,4,6};
+  state collision_6 = {8,3,4,3,1,7,4,6};
+  state collision_28 = {1,2,3,4,5,6,7,8};
+  vector<state> population;
+  population.push_back(solution);
+  population.push_back(collision_2);
+  population.push_back(collision_6);
+  population.push_back(collision_28);
+
   vector<double> weights = weighted_by<state>(population, fitness_fn<state>);
+  vector<double> response = {28, 26, 22, 0};
+
+  REQUIRE(weights == response);
 }
 
 // TEST_CASE("weightsr_random_choices function") {

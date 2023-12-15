@@ -27,10 +27,10 @@ ActionTable actions = {
 };
 
 template<typename S>
-vector<double> weighted_by(vector<S> population, function<double(const S&)> fitness) {
+vector<double> weighted_by(vector<S> population, function<double(const S&)> fitness_fn) {
   vector<double>population2;
-  transform(population.begin(), population.end(), back_inserter(population), [fitness](S x) {
-    return fitness(x); 
+  transform(population.begin(), population.end(), back_inserter(population2), [fitness_fn](S x) {
+    return fitness_fn(x); 
   });
 
   return population2;
