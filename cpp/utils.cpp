@@ -1,5 +1,8 @@
 #include <random>
+#include <cmath>
+#include <map>
 #include <functional>
+#include <memory>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -68,3 +71,37 @@ template <typename T>
 std::pair<T, T> pair_sum(const std::pair<T, T>& a, const std::pair<T, T>& b) {
   return std::pair<T, T>{ a.first + b.first, a.second + b.second };
 }
+
+/*
+ * Node in the Monte Carlo search tree, keeps track of the children state.
+ */
+template <typename S, typename A>
+struct MCT_Node {
+  MCT_Node(
+      std::shared_ptr<MCT_Node<S, A>> parent = nullptr,
+      S state = {},
+      int U = 0,
+      int N = 0
+    )
+    : parent{ parent },
+      state{ state },
+      U{ U },
+      N{ N },
+      children{},
+      actions{}
+  {}
+
+  double ucb(MCT_Node n, double C = 1.4) {
+    if (n.N == 0) {
+      return INFINITY;
+    }
+    return n.U / n.N + C * std::sqrt(std::log(n.parent->N) / n.N);
+  }
+
+  std::shared_ptr<MCT_Node<S, A>> parent;
+  S state;
+  int U;
+  int N;
+  std::map<MCT_Node<S, A>> children;
+  std::vector<A> actions;
+};
