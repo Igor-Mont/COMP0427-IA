@@ -32,8 +32,8 @@ bool verifyTransform(Matrix<T> matrix, S vector) {
 }
 
 template <typename T>
-void print_array(std::string msg, const std::vector<T>& array) {
-    std::cout << msg << "[ ";
+void print_array(std::string msg, const std::vector<T>& array, int i = 0) {
+    std::cout << i << " " << msg << "[ ";
     for (const auto& element : array) {
         std::cout << element << " ";
     }
