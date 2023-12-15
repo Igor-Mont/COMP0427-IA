@@ -86,9 +86,9 @@ std::pair<T, T> pair_sum(const std::pair<T, T>& a, const std::pair<T, T>& b) {
 template <typename S, typename A>
 struct MCT_Node {
   MCT_Node(
-      std::shared_ptr<MCT_Node<S, A>> parent = nullptr,
       S state = {},
-      int U = 0,
+      std::shared_ptr<MCT_Node<S, A>> parent = nullptr,
+      double U = 0.0,
       int N = 0
     )
     : parent{ parent },
@@ -99,17 +99,60 @@ struct MCT_Node {
       actions{}
   {}
 
-  double ucb(MCT_Node n, double C = 1.4) {
-    if (n.N == 0) {
-      return INFINITY;
-    }
-    return n.U / n.N + C * std::sqrt(std::log(n.parent->N) / n.N);
+  bool operator<(const MCT_Node<S, A>& other) const {
+    return N < other.N;
   }
 
   std::shared_ptr<MCT_Node<S, A>> parent;
   S state;
-  int U;
+  double U;
   int N;
-  std::map<MCT_Node<S, A>> children;
+  std::map<MCT_Node<S, A>, A> children;
   std::vector<A> actions;
 };
+
+/*
+ * Returns true if container contains element.
+ */
+template <typename Container, typename T>
+bool is_in(const Container& container, const T& element) {
+  return std::find(container.begin(), container.end(), element) != container.end();
+}
+
+/*
+ * Removes first occurrence of element from the container.
+ */
+template <typename Container, typename T>
+bool remove(Container& container, const T& element) {
+  auto it = std::find(container.begin(), container.end(), element);
+  if (it != container.end()) {
+    container.erase(it);
+    return true;
+  }
+  return false;
+}
+
+template <typename S, typename A>
+double ucb(MCT_Node<S, A> n, double C = 1.4) {
+  if (n.N == 0) {
+    return INFINITY;
+  }
+  return n.U / n.N + C * std::sqrt(std::log(n.parent->N) / n.N);
+}
+
+/*
+ * Returns a vector of keys of a map.
+ */
+
+template <typename T, typename U>
+std::vector<T> get_keys(std::map<T, U> m) {
+  std::vector<T> keys;
+  keys.reserve(m.size());
+  std::transform(
+    std::begin(m),
+    std::end(m),
+    std::back_inserter(keys),
+    [](const auto& pair) { return pair.first; }
+  );
+  return keys;
+}
