@@ -28,7 +28,7 @@ TEST_CASE("reproduce function") {
 
   state child = reproduce<state>(p1, p2);
   REQUIRE(child.size() == p1.size());
-  print_array("reproduce function: ", child);
+  // print_array("reproduce function: ", child);
 }
 
 TEST_CASE("matrixToVector should return vector that represent the matrix") {
@@ -46,7 +46,7 @@ TEST_CASE("matrixToVector should return vector that represent the matrix") {
   };
 
   state NQueenVector = matrixToVector<state>(NQueenBoard, 8);
-  print_array("n queen in vector form: ", NQueenVector);
+  // print_array("n queen in vector form: ", NQueenVector);
   
   REQUIRE(verifyTransform<state, int>(NQueenBoard, NQueenVector));
 }
@@ -82,7 +82,23 @@ TEST_CASE("weighted_by function") {
   REQUIRE(weights == response);
 }
 
-// TEST_CASE("weightsr_random_choices function") {
-//   vector<double> weights;
-//   pair<state, state> p1, p2 = weights_random_choices<state>(population, weights);
-// }
+TEST_CASE("weightsr_random_choices function") {
+  state solution = {8,2,5,3,1,7,4,6};
+  state collision_2 = {8,3,5,3,1,7,4,6};
+  state collision_6 = {8,3,4,3,1,7,4,6};
+  state collision_28 = {1,2,3,4,5,6,7,8};
+  vector<state> population;
+  population.push_back(solution);
+  population.push_back(collision_2);
+  population.push_back(collision_6);
+  population.push_back(collision_28);
+
+
+  vector<int> weights = {28, 26, 22, 0};
+
+  auto result = weights_random_choices<state>(population, weights, 2);
+  // weights_random_choices<state>(population, weights, 2);
+
+  print_array<int>("first parent", result[0]);
+  print_array<int>("secont parent", result[1]);
+}

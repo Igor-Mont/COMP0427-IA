@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <vector>
 
@@ -37,23 +38,28 @@ vector<double> weighted_by(vector<S> population, function<double(const S&)> fitn
 }
 
 template<typename S>
-pair<S, S> weights_random_choices(vector<S> population, vector<double> weights) {
-  int total, accumulated, counter = 0;
-  for(auto weight : weights){
+vector<S> weights_random_choices(vector<S> population, vector<int> weights, int parents) {
+  int total = 0, accumulated = 0, counter = 0;
+  for(int weight : weights){
     total += weight;
   }
+
   vector<S> result;
   int rnd = rand() % total;
-
-  for(int i = 0; i < population.size(); i++) {
+  
+  for(int i = 0; i < weights.size(); i++) {
     accumulated += weights[i];
 
-    if(counter < 2 && rnd < accumulated) {
+    if(counter < parents && rnd < accumulated) {
       result.push_back(population[i]);
+      counter++;
     }
   }
 
-  if(counter < 2) {
+  // cout << "counter: " << counter << " total: " << total << endl;
+  // print_array("p1: ", result[0]);
+
+  if(counter < parents) {
     if(population[0] != result[0]) {
       result.push_back(population[0]);
     } else {
@@ -61,7 +67,7 @@ pair<S, S> weights_random_choices(vector<S> population, vector<double> weights) 
     }
   }
 
-  return {result[0], result[1]};
+  return result;
 }
 
 template<typename S>
@@ -122,13 +128,13 @@ int fitness_fn(S child) {
 template<typename S>
 auto genectic_algoritm(vector<S> population, function<double(S)> fitness, double mutation_chance) {
   do {
-    auto weights = weighted_by(population, fitness);
-    vector<S> population2; 
+    vector<int> weights = weighted_by(population, fitness);
+    vector<S> new_population; 
     for(int i = 1; i < population.size(); i++) {
       pair<S, S> parent1, parent2 = weights_random_choices(population, weights, 2);
       S child = reproduce(parent1, parent2);
       if(rand() / static_cast<double>(RAND_MAX) < mutation_chance) child = mutate(child);
-      population2.push_back(child);
+      new_population.push_back(child);
     }
   }
   while(1);
