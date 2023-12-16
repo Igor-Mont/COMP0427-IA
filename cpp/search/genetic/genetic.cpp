@@ -108,7 +108,7 @@ int fitness_fn(S individual) {
 }
 
 template<typename S>
-bool hasMemberFitEnought(int fit, vector<S> population) {
+bool has_member_fit_enought(int fit, vector<S> population) {
   for(S ind : population) {
     int fitness = fitness_fn<S>(ind);
     if(fitness == fit) {
@@ -119,7 +119,7 @@ bool hasMemberFitEnought(int fit, vector<S> population) {
 }
 
 template<typename S>
-S memberFitEnought(int fit, vector<S> population) {
+S member_fit_enought(int fit, vector<S> population) {
   for(S ind : population) {
     int fitness = fitness_fn<S>(ind);
     if(fitness == 28) {
@@ -127,6 +127,10 @@ S memberFitEnought(int fit, vector<S> population) {
     }
   }
   return population[0];
+}
+
+double rand_zero_till_one() {
+  return rand() / static_cast<double>(RAND_MAX);
 }
 
 template<typename S>
@@ -139,7 +143,7 @@ S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mu
     for(int i = 0; i < population.size(); i++) {
       vector<S> result = weights_random_choices<S>(population, weights, parents);
       S child = reproduce<S>(result[0], result[1]);
-      if(rand() / static_cast<double>(RAND_MAX) < mutation_chance) child = mutate<S>(child, gene_pool);
+      if(rand_zero_till_one() < mutation_chance) child = mutate<S>(child, gene_pool);
       new_population.push_back(child);
     }
     population = new_population;
