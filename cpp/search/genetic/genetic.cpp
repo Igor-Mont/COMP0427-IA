@@ -4,10 +4,19 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <ostream>
 #include <vector>
+#include <limits>
 
 using namespace std;
 
+int maxValue = std::numeric_limits<int>::max();
+
+std::random_device rd;
+std::mt19937 gen(rd());  // Mersenne Twister
+std::uniform_real_distribution<> dis(0, 1);  // Gera valores entre 1 e maxValue
+std::uniform_int_distribution<> dis_int(1, maxValue);  // Gera valores entre 1 e maxValue
+//
 template<typename S>
 vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
   vector<int>population2;
@@ -20,6 +29,7 @@ vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
 
 template<typename S>
 vector<S> weights_random_choices(vector<S> population, vector<int> weights, int parents) {
+
   int total = 0, accumulated = 0, counter = 0;
   vector<S> result;
 
@@ -27,8 +37,8 @@ vector<S> weights_random_choices(vector<S> population, vector<int> weights, int 
     total += weight;
   }
 
-  int rnd = rand() % total;
-  
+  int rnd = dis_int(gen) % total;
+
   for(int i = 0; i < weights.size(); i++) {
     accumulated += weights[i];
 
@@ -67,12 +77,12 @@ S reproduce(S parent1, S parent2) {
 
 template<typename S>
 S mutate(S child, S gene_pool) {
-  int n = rand() % child.size();
-  int gene = rand() % gene_pool.size();
+  int n = dis_int(gen) % child.size();
+  int gene = dis_int(gen) % gene_pool.size();
 
   while(child[n] == gene_pool[gene]) {
-    n = rand() % child.size();
-    gene = rand() % gene_pool.size();
+    n = dis_int(gen) % child.size();
+    gene = dis_int(gen) % gene_pool.size();
   };
 
   child[n] = gene_pool[gene];
@@ -120,12 +130,11 @@ int find_fittest_individual(vector<int> weights) {
   return i_result;
 }
 
-double rand_zero_till_one() {
-  return rand() / static_cast<double>(RAND_MAX);
-}
-
 template<typename S>
 S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
+
+  double randomValue = dis(gen);
+
   int attemptNumber = 0;
   int treshold = fitness_treshold(population[0].size());
   int i = 0;
@@ -135,13 +144,14 @@ S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mu
     for(int i = 0; i < population.size(); i++) {
       vector<S> result = weights_random_choices<S>(population, weights, parents);
       S child = reproduce<S>(result[0], result[1]);
-      if(rand_zero_till_one() < mutation_chance) child = mutate<S>(child, gene_pool);
+      if(dis(gen) < mutation_chance) child = mutate<S>(child, gene_pool);
       new_population.push_back(child);
     }
     population = new_population;
     weights = weighted_by<S>(population, fitness_fn);
     int i = find_fittest_individual(weights);
-  } while(weights[i] < treshold && attemptNumber++ < 1000000);
-  
+  } while(weights[i] < treshold && attemptNumber++ < 50000);
+  cout << attemptNumber << endl; 
   return population[i]; 
 }
+
