@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 #include <vector>
 
 using namespace std;
@@ -107,26 +108,16 @@ int fitness_fn(S individual) {
   return fitness_treshold(size) - collisions;
 }
 
-template<typename S>
-bool has_member_fit_enought(int fit, vector<S> population) {
-  for(S ind : population) {
-    int fitness = fitness_fn<S>(ind);
-    if(fitness == fit) {
-      return true;
+int find_fittest_individual(vector<int> weights) {
+  int n = weights[0];
+  int i_result = 0;
+  for(int i = 1; i < weights.size(); i++) {
+    if(n < weights[i]) {
+      i_result = i;
     }
   }
-  return false;
-}
 
-template<typename S>
-S member_fit_enought(int fit, vector<S> population) {
-  for(S ind : population) {
-    int fitness = fitness_fn<S>(ind);
-    if(fitness == 28) {
-      return ind;
-    }
-  }
-  return population[0];
+  return i_result;
 }
 
 double rand_zero_till_one() {
@@ -134,11 +125,12 @@ double rand_zero_till_one() {
 }
 
 template<typename S>
-S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents, int fit) {
+S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
   int attemptNumber = 0;
-  vector<int> weights; 
+  int treshold = fitness_treshold(population[0].size());
+  int i = 0;
+  vector<int> weights = weighted_by<S>(population, fitness_fn); 
   do {
-    weights = weighted_by<S>(population, fitness_fn);
     vector<S> new_population; 
     for(int i = 0; i < population.size(); i++) {
       vector<S> result = weights_random_choices<S>(population, weights, parents);
@@ -147,7 +139,9 @@ S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mu
       new_population.push_back(child);
     }
     population = new_population;
-  } while(!hasMemberFitEnought<S>(fit, population) && attemptNumber++ < 1000000);
+    weights = weighted_by<S>(population, fitness_fn);
+    int i = find_fittest_individual(weights);
+  } while(weights[i] < treshold && attemptNumber++ < 1000000);
   
-  return memberFitEnought(fit, population); 
+  return population[i]; 
 }

@@ -66,11 +66,15 @@ TEST_CASE("weightsr_random_choices function") {
 }
 
 TEST_CASE("integrate all function") {
-  vector<state> population = generateRandomPopulation<state>(20, 8);
+  int size = 8;
+  int populationSize = 50;
+  vector<state> population = generateRandomPopulation<state>(populationSize, size);
   // for(int i = 0; i < population.size(); i++) print_array("individual: ", population[i], i);
   double probability = 0.1;
-  state gene_pool = {1,2,3,4,5,6,7,8};
-  state result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2, 28);
-  REQUIRE(fitness_fn<state>(result) == 28);
-  print_array("dentro teste: ", result);
+  state gene_pool(size, 0);
+  iota(gene_pool.begin(), gene_pool.end(), 1); // Preenche com 1, 2, ..., size
+
+  state result = genectic_algoritm<state>(population, fitness_fn<state>, probability, gene_pool, 2);
+  REQUIRE(fitness_fn<state>(result) == fitness_treshold(size));
+  // print_array("dentro teste: ", result);
 }
