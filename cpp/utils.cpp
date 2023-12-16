@@ -14,6 +14,28 @@
  */
 using Index2D = std::pair<int, int>;
 
+template<typename S>
+S generateRandomIndividual(int size) {
+  S individual;
+  
+  for(int i = 0; i < size; i++) {
+    int n = rand() % size;
+    individual.push_back(n);
+  }
+
+  return individual;
+}
+
+template<typename S>
+std::vector<S> generateRandomPopulation(int populationSize, int individualSize) {
+  std::vector<S> population;
+  for (int i = 0; i < populationSize; i++) {
+    S individual = generateRandomIndividual<S>(individualSize);
+    population.push_back(individual);
+  }
+  return population;
+}
+
 std::ostream& operator<<(std::ostream& os, const Index2D& value) {
   os << "(" << value.first << ", " << value.second << ")";
   return os;

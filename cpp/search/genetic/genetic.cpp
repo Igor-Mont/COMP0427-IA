@@ -3,29 +3,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
-#include <iostream>
-#include <map>
 #include <vector>
 
 using namespace std;
-
-enum Direction {
-  W, N, E, S,
-  NW, NE, SE, SW,
-};
-
-using ActionTable = map<Direction, Index2D>;
-
-ActionTable actions = {
-  { Direction::N, { -1,  0 } },
-  { Direction::S, { 1, 0 } },
-  { Direction::W, { 0, -1 } },
-  { Direction::E, {  0,  1 } },
-  { Direction::NW, { -1, -1 } },
-  { Direction::NE, { -1,  1 } },
-  { Direction::SE, {  1,  1 } },
-  { Direction::SW, {  1, -1 } },
-};
 
 template<typename S>
 vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
@@ -40,11 +20,12 @@ vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
 template<typename S>
 vector<S> weights_random_choices(vector<S> population, vector<int> weights, int parents) {
   int total = 0, accumulated = 0, counter = 0;
+  vector<S> result;
+
   for(int weight : weights){
     total += weight;
   }
 
-  vector<S> result;
   int rnd = rand() % total;
   
   for(int i = 0; i < weights.size(); i++) {
@@ -55,9 +36,6 @@ vector<S> weights_random_choices(vector<S> population, vector<int> weights, int 
       counter++;
     }
   }
-
-  // cout << "counter: " << counter << " total: " << total << endl;
-  // print_array("p1: ", result[0]);
 
   if(counter < parents) {
     if(population[0] != result[0]) {
@@ -106,18 +84,19 @@ int fitness_treshold(int size) {
 }
 
 template<typename S>
-int fitness_fn(S child) {
+int fitness_fn(S individual) {
   int collisions = 0;
-  int size = child.size();
+  int size = individual.size();
+
   for(int i = 0; i < size - 1; i++) {
     for(int j = 1; j < size; j++) {
       if(i+j < size) {
-        int target = child[i + j];
-        bool at_bounds_upwards = child[i] + j <= size;
-        bool at_bounds_downwards = child[i] - j > 0;
-        bool fowardRowCollision = child[i] == target;
-        bool fowardAscendCollision = at_bounds_upwards && child[i] + j == target; 
-        bool fowardDescendCollision = at_bounds_downwards && child[i] - j == target;
+        int target = individual[i + j];
+        bool at_bounds_upwards = individual[i] + j <= size;
+        bool at_bounds_downwards = individual[i] - j > 0;
+        bool fowardRowCollision = individual[i] == target;
+        bool fowardAscendCollision = at_bounds_upwards && individual[i] + j == target; 
+        bool fowardDescendCollision = at_bounds_downwards && individual[i] - j == target;
         if(fowardRowCollision || fowardAscendCollision || fowardDescendCollision) {
           collisions++;
         }
@@ -132,7 +111,7 @@ template<typename S>
 bool hasMemberFitEnought(int fit, vector<S> population) {
   for(S ind : population) {
     int fitness = fitness_fn<S>(ind);
-    if(fitness == 28) {
+    if(fitness == fit) {
       return true;
     }
   }
@@ -167,18 +146,4 @@ S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mu
   } while(!hasMemberFitEnought<S>(fit, population) && attemptNumber++ < 1000000);
   
   return memberFitEnought(fit, population); 
-}
-
-template<typename S>
-S matrixToVector(Matrix<int> matrix, int size) {
-  S nQueens;
-
-  for(int i = 0; i < size; i++) {
-    for(int j = 0; j < size; j++) {
-      if(matrix[j][i] == 1) {
-        nQueens.push_back(j+1);
-      }
-    }
-  }
-  return nQueens;
 }
