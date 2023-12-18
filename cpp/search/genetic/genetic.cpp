@@ -77,12 +77,11 @@ S reproduce(S parent1, S parent2) {
 
 template<typename S>
 S mutate(S child, S gene_pool) {
-  int n = dis_int(gen) % child.size();
-  int gene = dis_int(gen) % gene_pool.size();
+  int n = rand() % child.size();
+  int gene = rand() % gene_pool.size();
 
-  while(child[n] == gene_pool[gene]) {
-    n = dis_int(gen) % child.size();
-    gene = dis_int(gen) % gene_pool.size();
+  if(child[n] == gene_pool[gene]) {
+    gene = (gene+1) % gene_pool.size();
   };
 
   child[n] = gene_pool[gene];
@@ -103,12 +102,24 @@ int fitness_fn(S individual) {
     for(int j = 1; j < size; j++) {
       if(i+j < size) {
         int target = individual[i + j];
-        bool at_bounds_upwards = individual[i] + j <= size;
-        bool at_bounds_downwards = individual[i] - j > 0;
-        bool fowardRowCollision = individual[i] == target;
-        bool fowardAscendCollision = at_bounds_upwards && individual[i] + j == target; 
-        bool fowardDescendCollision = at_bounds_downwards && individual[i] - j == target;
-        if(fowardRowCollision || fowardAscendCollision || fowardDescendCollision) {
+        int current = individual[i];
+        // cout << "current: "<< individual[i] << endl;
+        // cout << "target: " << target << endl; 
+
+        int foward_ascend_collision = individual[i] + j; 
+        // cout << "forward ascend collision: " << foward_ascend_collision << endl; 
+
+        int foward_descend_collision = individual[i] - j;
+        // cout << "forward descend collision: " << foward_descend_collision << endl; 
+
+        bool at_bounds_upwards = foward_ascend_collision <= individual.size();
+        // cout << "downwards: " << at_bounds_upwards << endl; 
+
+        bool at_bounds_downwards = foward_descend_collision > 0;
+        // cout << "upwards: " << at_bounds_downwards << endl << endl; 
+        if((current == target) || 
+          (at_bounds_upwards && foward_ascend_collision == target) || 
+          (at_bounds_downwards && foward_descend_collision == target)) {
           collisions++;
         }
       }
@@ -133,25 +144,30 @@ int find_fittest_individual(vector<int> weights) {
 template<typename S>
 S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
 
-  double randomValue = dis(gen);
-
-  int attemptNumber = 0;
+    int attemptNumber = 0;
   int treshold = fitness_treshold(population[0].size());
   int i = 0;
-  vector<int> weights = weighted_by<S>(population, fitness_fn); 
-  do {
+  vector<int> weights;
+
+
+  while(attemptNumber++ < 50000) {
     vector<S> new_population; 
+    weights = weighted_by<S>(population, fitness_fn);
+    
+    for(int i = 1; i < weights.size(); i++) {
+      if(weights[i] == treshold) {
+        cout << attemptNumber << endl; 
+        return population[i];
+      }
+    }
+
     for(int i = 0; i < population.size(); i++) {
       vector<S> result = weights_random_choices<S>(population, weights, parents);
       S child = reproduce<S>(result[0], result[1]);
-      if(dis(gen) < mutation_chance) child = mutate<S>(child, gene_pool);
+      if(rand() / static_cast<double>(RAND_MAX) < mutation_chance) child = mutate<S>(child, gene_pool);
       new_population.push_back(child);
     }
     population = new_population;
-    weights = weighted_by<S>(population, fitness_fn);
-    int i = find_fittest_individual(weights);
-  } while(weights[i] < treshold && attemptNumber++ < 50000);
-  cout << attemptNumber << endl; 
-  return population[i]; 
-}
 
+  }
+}
