@@ -1,4 +1,6 @@
+#include <memory>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
 #include <iostream>
 #include <functional>
@@ -18,6 +20,7 @@ struct GameState {
   double utility;
   std::map<Index2D, char> board;
   std::vector<Index2D> moves;
+
 };
 
 std::ostream& operator<<(std::ostream& s, GameState state) {
@@ -98,26 +101,38 @@ struct Game {
  * Select a leaf node in the tree.
  */
 template <typename A>
-MCT_Node<GameState, A> select(MCT_Node<GameState, A> n) {
-  if (not n.children.empty()) {
-    auto keys = get_keys(n.children);
-    auto comparison = [](auto n1, auto n2) { return ucb(n1) < ucb(n2); };
-    return select(*std::max_element(keys.begin(), keys.end(), comparison));
+std::shared_ptr<MCT_Node<GameState, A>> select(std::shared_ptr<MCT_Node<GameState, A>> n) {
+  if (not n->children.empty()) {
+    auto comparison = [](auto n1, auto n2) { 
+      auto r1 = ucb(*(n1.first));
+      auto r2 = ucb(*(n2.first));
+      auto result = r1 < r2;
+      std::cout << r1 << " " << r2 << std::endl;
+      return result; 
+
+    };
+    return select(std::max_element(n->children.begin(), n->children.end(), comparison)->first);
   }
   return n;
 }
-
 /*
  * Expand the leaf node by adding all its children states.
  */
 template <typename A>
-MCT_Node<GameState, A> expand(MCT_Node<GameState, A>& n, Game<A>& game) {
-  if (n.children.empty() and not game.is_terminal(n.state)) {
-    for (const auto& action : game.actions(n.state)) {
-      auto state = game.result(n.state, action);
-      auto parent = std::make_shared<MCT_Node<GameState, A>>(n);
-      // TODO: this isn't expanding the n.children map.
-      n.children[MCT_Node(state, parent)] = action;
+std::shared_ptr<MCT_Node<GameState, A>> expand(std::shared_ptr<MCT_Node<GameState, A>> n, Game<A>& game) {
+  if (n->children.empty() and not game.is_terminal(n->state)) {
+    for (const auto& action : game.actions(n->state)) {
+      auto state = game.result(n->state, action);
+      std::shared_ptr<MCT_Node<GameState, A>> node = std::make_shared<MCT_Node<GameState, A>>(state, n);
+
+      n->children[node] = action;
+    }
+
+    std::cout << "\nexpand function" << std::endl;
+    for (const auto& pair : n->children) {
+      const auto key = pair.first;
+      const A& value = pair.second;
+      std::cout << "Action: " << value << ", Node Address: " << key << std::endl;
     }
   }
   return select(n);
@@ -134,6 +149,7 @@ double simulate(Game<A>& game, GameState state) {
     state = game.result(state, action);
   }
   auto v = game.utility(state, player_mark);
+  std::cout << "simulate utility result: " << -v << std::endl;
   return -v;
 }
 
@@ -141,28 +157,48 @@ double simulate(Game<A>& game, GameState state) {
  * Passes the utility back to all parent nodes.
  */
 template <typename A>
-void backprop(MCT_Node<GameState, A> n, double utility) {
+void backprop(std::shared_ptr<MCT_Node<GameState, A>> n, double utility) {
   if (utility > 0) {
-    n.U += utility;
+    n->U += utility;
   }
-  n.N++;
-  if (n.parent != nullptr) {
-    backprop(*n.parent, -utility);
+  n->N++;
+  if (n->parent != nullptr) {
+    backprop(n->parent, -utility);
   }
 }
 
 template <typename A>
 A monte_carlo_tree_search(GameState state, Game<A>& game, int N=1000) {
-  auto root = MCT_Node<GameState, A>(state);
-  for (size_t i{}; i < N; i++) {
+  std::shared_ptr<MCT_Node<GameState, A>> root = std::make_shared<MCT_Node<GameState, A>>(state);
+  for (size_t i{}; i < 1000; i++) {
     auto leaf = select(root);
+
+    std:: cout << "\nselect leaf" << std::endl;
+    for(auto index2d : leaf->state.board) {
+      std::cout << index2d.first << std::endl;
+    }
+
     auto child = expand(leaf, game);
-    auto result = simulate(game, child.state);
+
+    for(auto index2d : child->state.board) {
+      std::cout << index2d.first << std::endl;
+    }
+
+    // auto keys = root->children.begin(); return keys->second;
+    //
+    auto result = simulate(game, child->state);
     backprop(child, result);
   }
 
-  auto comparison = [](auto p1, auto p2){ return p1.first.N < p2.first.N; };
-  return std::max_element(root.children.begin(), root.children.end(), comparison)->second;
+  std::cout << "\nroot childrens" << std::endl;
+  for (const auto& pair : root->children) {
+    const auto key = pair.first;
+    const A& value = pair.second;
+    std::cout << "N: " << key->N << ", U: " << key->U << ", Action: " << value << ", Node Address: " << key << std::endl;
+  }
+
+  auto comparison = [](auto p1, auto p2){ return p1.first->N < p2.first->N; };
+  return std::max_element(root->children.begin(), root->children.end(), comparison)->second;
 }
 
 // ---------------------------------------------------------------------------------
