@@ -16,7 +16,7 @@ std::random_device rd;
 std::mt19937 gen(rd());  // Mersenne Twister
 std::uniform_real_distribution<> dis(0, 1);  // Gera valores entre 1 e maxValue
 std::uniform_int_distribution<> dis_int(1, maxValue);  // Gera valores entre 1 e maxValue
-//
+
 template<typename S>
 vector<int> weighted_by(vector<S> population, function<int(S)> fitness_fn) {
   vector<int>population2;
@@ -103,20 +103,11 @@ int fitness_fn(S individual) {
       if(i+j < size) {
         int target = individual[i + j];
         int current = individual[i];
-        // cout << "current: "<< individual[i] << endl;
-        // cout << "target: " << target << endl; 
-
         int foward_ascend_collision = individual[i] + j; 
-        // cout << "forward ascend collision: " << foward_ascend_collision << endl; 
-
         int foward_descend_collision = individual[i] - j;
-        // cout << "forward descend collision: " << foward_descend_collision << endl; 
-
         bool at_bounds_upwards = foward_ascend_collision <= individual.size();
-        // cout << "downwards: " << at_bounds_upwards << endl; 
-
         bool at_bounds_downwards = foward_descend_collision > 0;
-        // cout << "upwards: " << at_bounds_downwards << endl << endl; 
+
         if((current == target) || 
           (at_bounds_upwards && foward_ascend_collision == target) || 
           (at_bounds_downwards && foward_descend_collision == target)) {
@@ -129,26 +120,25 @@ int fitness_fn(S individual) {
   return fitness_treshold(size) - collisions;
 }
 
-int find_fittest_individual(vector<int> weights) {
-  int n = weights[0];
-  int i_result = 0;
-  for(int i = 1; i < weights.size(); i++) {
-    if(n < weights[i]) {
-      i_result = i;
+template <typename S>
+S find_fittest_individual(const std::vector<S>& population, function<int(S)> fitness_fn) {
+  S largest_elem = population[0];
+
+  for (int i = 1; i < population.size(); ++i) {
+    if (population[i] > largest_elem) {
+      largest_elem = population[i]; 
     }
   }
 
-  return i_result;
+  return largest_elem;
 }
 
 template<typename S>
 S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mutation_chance, S gene_pool, int parents) {
 
-    int attemptNumber = 0;
+  int attemptNumber = 0;
   int treshold = fitness_treshold(population[0].size());
-  int i = 0;
   vector<int> weights;
-
 
   while(attemptNumber++ < 50000) {
     vector<S> new_population; 
@@ -168,6 +158,8 @@ S genectic_algoritm(vector<S> population, function<int(S)> fitness_fn, double mu
       new_population.push_back(child);
     }
     population = new_population;
-
   }
+
+  return find_fittest_individual(population, fitness_fn);
 }
+
