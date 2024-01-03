@@ -10,7 +10,7 @@
 #include <assert.h>
 
 #include "../search.cpp"
-#include "../../utils.cpp"
+#include "../utils.cpp"
 
 // ---------------------------------------------------------------------------------
 // Utilities.

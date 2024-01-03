@@ -1,8 +1,7 @@
-#include <memory>
 #define CATCH_CONFIG_MAIN
-#include "../../catch.hpp"
+#include "../catch.hpp"
+#include <memory>
 #include "mcts.cpp"
-
 #include <vector>
 #include <set>
 #include <map>

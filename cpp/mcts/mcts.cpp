@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 
-#include "../../utils.cpp"
+#include "../utils.cpp"
 
 // ---------------------------------------------------------------------------------
 // Games.

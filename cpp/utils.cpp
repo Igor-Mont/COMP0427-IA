@@ -129,7 +129,7 @@ struct MCT_Node {
   S state;
   double U;
   int N;
-  std::map<MCT_Node<S, A>, A> children;
+  std::map<std::shared_ptr<MCT_Node<S, A>>, A> children;
   std::vector<A> actions;
 };
 
