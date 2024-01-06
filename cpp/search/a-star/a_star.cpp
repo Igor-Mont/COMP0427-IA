@@ -12,13 +12,14 @@
 template <typename S, typename A>
 std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S, A> f) {
   std::shared_ptr<Node<S, A>> initial_node = std::make_shared<Node<S, A>>(problem.initial);
-  auto frontier = PriorityQueue<S, A>{ { initial_node }, f };
-  auto reached = std::map<S, std::shared_ptr<Node<S, A>>>{
+  PriorityQueue<S, A> frontier = PriorityQueue<S, A>{ { initial_node }, f };
+  std::map<S, std::shared_ptr<Node<S, A>>> reached{
     { problem.initial, initial_node }
   };
 
-  while (frontier) {  // overloaded bool conversion
+  while (frontier) {  // Overloaded bool conversion.
     std::shared_ptr<Node<S, A>> current_node = frontier.pop();
+    
     if (problem.is_goal(current_node->state)) {
       return current_node;
     }
@@ -35,7 +36,7 @@ std::shared_ptr<Node<S, A>> best_first_search(Problem<S, A>& problem, ToDouble<S
     }
   }
 
-  return nullptr;  // Indica que não foi encontrado um caminho
+  return nullptr;  // Indicates that a path was not found.
 }
 
 
