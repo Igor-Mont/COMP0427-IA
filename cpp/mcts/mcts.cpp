@@ -20,7 +20,6 @@ struct GameState {
   double utility;
   std::map<Index2D, char> board;
   std::vector<Index2D> moves;
-
 };
 
 std::ostream& operator<<(std::ostream& s, GameState state) {
@@ -79,16 +78,11 @@ struct Game {
         } catch (std::exception& e) {}
 
         if (is_terminal(state)) {
-          std::cout << state;
           return utility(state, to_move(initial));
         }
       }
     }
     return {};
-  }
-
-  void display(GameState state) {
-    std::cout << state;
   }
 
   GameState initial;
@@ -106,10 +100,7 @@ std::shared_ptr<MCT_Node<GameState, A>> select(std::shared_ptr<MCT_Node<GameStat
     auto comparison = [](auto n1, auto n2) { 
       auto r1 = ucb(*(n1.first));
       auto r2 = ucb(*(n2.first));
-      auto result = r1 < r2;
-      std::cout << r1 << " " << r2 << std::endl;
-      return result; 
-
+      return r1 < r2;
     };
     return select(std::max_element(n->children.begin(), n->children.end(), comparison)->first);
   }
@@ -127,13 +118,6 @@ std::shared_ptr<MCT_Node<GameState, A>> expand(std::shared_ptr<MCT_Node<GameStat
 
       n->children[node] = action;
     }
-
-    std::cout << "\nexpand function" << std::endl;
-    for (const auto& pair : n->children) {
-      const auto key = pair.first;
-      const A& value = pair.second;
-      std::cout << "Action: " << value << ", Node Address: " << key << std::endl;
-    }
   }
   return select(n);
 }
@@ -149,7 +133,6 @@ double simulate(Game<A>& game, GameState state) {
     state = game.result(state, action);
   }
   auto v = game.utility(state, player_mark);
-  std::cout << "simulate utility result: " << -v << std::endl;
   return -v;
 }
 
@@ -170,31 +153,15 @@ void backprop(std::shared_ptr<MCT_Node<GameState, A>> n, double utility) {
 template <typename A>
 A monte_carlo_tree_search(GameState state, Game<A>& game, int N=1000) {
   std::shared_ptr<MCT_Node<GameState, A>> root = std::make_shared<MCT_Node<GameState, A>>(state);
-  for (size_t i{}; i < 1000; i++) {
+  for (size_t i{}; i < N; i++) {
     auto leaf = select(root);
-
-    std:: cout << "\nselect leaf" << std::endl;
-    for(auto index2d : leaf->state.board) {
-      std::cout << index2d.first << std::endl;
-    }
-
     auto child = expand(leaf, game);
-
-    for(auto index2d : child->state.board) {
-      std::cout << index2d.first << std::endl;
-    }
-
-    // auto keys = root->children.begin(); return keys->second;
-    //
     auto result = simulate(game, child->state);
     backprop(child, result);
-  }
-
-  std::cout << "\nroot childrens" << std::endl;
-  for (const auto& pair : root->children) {
-    const auto key = pair.first;
-    const A& value = pair.second;
-    std::cout << "N: " << key->N << ", U: " << key->U << ", Action: " << value << ", Node Address: " << key << std::endl;
+    for (auto const& [k, v] : root->children) {
+      std::cout << v << "=" << "(" << k->N << "," << ucb(*k) << ") ";
+    }
+    std::cout << std::endl;
   }
 
   auto comparison = [](auto p1, auto p2){ return p1.first->N < p2.first->N; };
@@ -260,26 +227,14 @@ struct TicTacToe : Game<Index2D> {
     return state.utility != 0 or state.moves.size() == 0;
   }
 
-  void display(GameState state) {
-    auto board = state.board;
-    for (int x = 1; x < h + 1; x++) {
-      for (int y = 1; y < h + 1; y++) {
-        auto it = board.find({ x, y });
-        auto el = it == board.end() ? '.' : it->second;
-        std::cout << el << " ";
-      }
-      std::cout << "\n";
-    }
-  }
-
   double compute_utility(std::map<Index2D, char> board, Index2D move, char player_mark) const {
     if (k_in_row(board, move, player_mark, {0, 1}) or
         k_in_row(board, move, player_mark, {1, 0}) or
         k_in_row(board, move, player_mark, {1, -1}) or
-        k_in_row(board, move, player_mark, {1, 1})) {
+        k_in_row(board, move, player_mark, {1, 1}))
       return player_mark == 'X' ? 1 : -1;
-    }
-    return 0;
+    else
+      return 0;
   }
 
   bool k_in_row(std::map<Index2D, char> board, Index2D move, char player_mark, Index2D delta_x_y) const {
@@ -298,8 +253,8 @@ struct TicTacToe : Game<Index2D> {
 
     while (board.find({ x, y })->second == player_mark) {
       n += 1;
-      x += delta_x;
-      y += delta_y;
+      x -= delta_x;
+      y -= delta_y;
     }
     n--; // because we counted move itself twice.
     return n >= k;

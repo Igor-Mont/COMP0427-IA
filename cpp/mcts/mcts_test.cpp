@@ -4,6 +4,7 @@
 #include "mcts.cpp"
 #include <vector>
 #include <set>
+#include <random>
 #include <map>
 
 template <typename M>
@@ -45,27 +46,27 @@ TEST_CASE("Monte Carlo Tree Search") {
   //   auto child = expand(node, ttt);
   //   simulate(ttt, node->state);
   // }
-  // SECTION("plays on middle and wins") {
-  //   auto state = gen_state(
-  //     'X',
-  //     { {1, 1}, {3, 3} }, // X positions
-  //     { {1, 2}, {3, 2} }  // O positions
-  //   );
-  //   Index2D expected_move{ 2, 2 };
-  //   auto move = monte_carlo_tree_search(state, ttt);
-  //   REQUIRE(move == expected_move);
-  // }
-
-  SECTION("plays on middle if that is the most likely move") {
-    auto state = gen_state('X',
-      { {1, 1}, {3, 3}, {3, 1} }, // X positions
+  SECTION("plays on middle and wins") {
+    auto state = gen_state(
+      'X',
+      { {1, 1}, {3, 3} }, // X positions
       { {1, 2}, {3, 2} }  // O positions
     );
     Index2D expected_move{ 2, 2 };
     auto move = monte_carlo_tree_search(state, ttt);
-    std::cout << move << std::endl;
     REQUIRE(move == expected_move);
   }
+
+  //SECTION("plays on middle if that is the most likely move") {
+  //  auto state = gen_state('X',
+  //    { {1, 1}, {3, 3}, {3, 1} }, // X positions
+  //    { {1, 2}, {3, 2} }  // O positions
+  //  );
+  //  Index2D expected_move{ 2, 2 };
+  //  auto move = monte_carlo_tree_search(state, ttt);
+  //  std::cout << move << std::endl;
+  //  REQUIRE(move == expected_move);
+  //}
 
   // SECTION("plays to avoid enemy's win") {
   //   auto state = gen_state(
