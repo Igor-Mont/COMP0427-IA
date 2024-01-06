@@ -110,7 +110,7 @@ struct MCT_Node {
   MCT_Node(
       S state = {},
       std::shared_ptr<MCT_Node<S, A>> parent = nullptr,
-      double U = 0.0,
+      int U = 0,
       int N = 0
     )
     : parent{ parent },
@@ -127,9 +127,9 @@ struct MCT_Node {
 
   std::shared_ptr<MCT_Node<S, A>> parent;
   S state;
-  double U;
+  int U;
   int N;
-  std::map<MCT_Node<S, A>, A> children;
+  std::map<std::shared_ptr<MCT_Node<S, A>>, A> children;
   std::vector<A> actions;
 };
 
