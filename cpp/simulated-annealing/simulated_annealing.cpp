@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <utility>
 #include <vector>
 #include <functional>
 #include <cmath>
@@ -37,18 +38,22 @@ ScheduleFunction exp_schedule(int k = 20, double lam = 0.005, int limit = 100) {
  */
 template <typename S, typename A>
 S simulated_annealing(Problem<S, A>& problem, ScheduleFunction schedule = exp_schedule()) {
-  auto current = std::make_shared<Node<S, A>>(problem.initial);
+  std::shared_ptr<Node<S, A>> current = std::make_shared<Node<S, A>>(problem.initial);
   for (size_t t{}; t < std::numeric_limits<size_t>::max(); t++) {
-    auto T = schedule(t);
+    double T = schedule(t);
+
     if (T == 0) {
       return current->state;
     }
-    auto neighbors = expand(problem, current);
+
+    std:std::vector<Node<S, A>> neighbors = expand(problem, current);
+
     if (neighbors.empty()) {
       return current->state;
     }
-    auto next_choice = random_choice(neighbors);
-    auto delta_e = problem.value(next_choice.state) - problem.value(current->state);
+
+    Node<S, A> next_choice = random_choice<Node<S, A>>(neighbors);
+    double delta_e = problem.value(next_choice.state) - problem.value(current->state);
     if (delta_e > 0 || probability(std::exp(delta_e / T))) {
       current = std::make_shared<Node<S, A>>(next_choice);
     }
@@ -112,7 +117,7 @@ struct PeakFindingProblem : Problem<Index2D, Direction> {
   std::vector<Direction> actions(const Index2D state) const override {
     std::vector<Direction> allowed_actions;
     for (const auto& [action, movement] : defined_actions) {
-      auto next_state = pair_sum(state, movement);
+      Index2D next_state = pair_sum(state, movement);
       if (valid_state(next_state)) {
         allowed_actions.push_back(action);
       }
