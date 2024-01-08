@@ -1,5 +1,5 @@
 #include "../search.cpp"
-#include "../../utils.cpp"
+#include "../utils.cpp"
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
