@@ -4,8 +4,6 @@
 // Utils.
 
 class MCTNode {
-  static lastAssignedId = 0;
-
   constructor(state = null, parent = null, U = 0, N = 0) {
     this.parent = parent;
     this.state = state;
@@ -13,8 +11,6 @@ class MCTNode {
     this.N = N;
     this.children = new Map();
     this.actions = null;
-    MCTNode.lastAssignedId += 1;
-    this.id = MCTNode.lastAssignedId;
   }
 }
 
