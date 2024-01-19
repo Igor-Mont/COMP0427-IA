@@ -26,7 +26,12 @@ const orientations = [EAST, NORTH, WEST, SOUTH];
 const [LEFT, RIGHT] = [+1, -1];
 
 function turnHeading(heading, inc, headings=orientations.map(String)) {
-  return headings[(headings.indexOf(heading) + inc) % headings.length];
+  let idx = headings.indexOf(heading) + inc;
+  if (idx == -1) {
+    idx = headings.length;
+  }
+  idx = idx % headings.length;
+  return headings[idx];
 }
 
 function turnRight(heading) {
@@ -48,8 +53,8 @@ function vectorAdd(xs, ys) {
   return sum;
 }
 
-function maxBy(it, keyFunc) {
-  let arr = [...it];
+function maxBy(a, keyFunc) {
+  let arr = a instanceof Iterator ? [...a] : a;
   if (arr.length === 0) {
     return undefined;
   }
@@ -105,7 +110,7 @@ class MDP {
     this.actlist = actlist;
 
     // Para evitar comparação de dois objetos mutáveis.
-    this.terminals = terminals.map(x => x.toString());
+    this.terminals = terminals.map(String);
 
     // transitions DEVE ser um Map de strings, que representam estados, para
     // outros Maps. Esses outros Maps são de strings, que representam actions,
@@ -132,7 +137,7 @@ class MDP {
   // Modelo de transição. Para um estado e ação, retorna uma Array de pares
   // (propabilidade, estado resultado).
   T(state, action) {
-    return action ?
+    return this.transitions ?
       this.transitions.get(state.toString()).get(action.toString())
       : [[0.0, state.toString()]];
   }
@@ -164,43 +169,43 @@ class MDP {
 
 class GridMDP extends MDP {
   constructor(grid, terminals, init = [0, 0], gamma=0.9) {
-    // Pois queremos row 0 na parte inferior.
-    grid.reverse()
+    let actlist = orientations.map(String);
     let reward = new Map();
     let states = new Set();
-    this.rows = grid.length;
-    this.cols = grid[0].length;
 
-    for (let x = 0; x < this.cols; x++) {
-      for (let y = 0; y < this.rows; y++) {
-        if (grid[x][y]) {
+    // Pois queremos row 0 na parte inferior.
+    grid.reverse()
+
+    let rows = grid.length;
+    let cols = grid[0].length;
+
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
+        if (grid[y][x]) {
           let p = [x, y].toString();
           states.add(p)
-          reward.set(p, grid[x][y]);
+          reward.set(p, grid[y][x]);
         }
       }
     }
 
-    let actlist = orientations.map(String);
     let transitions = new Map();
-
     for (const s of states) {
       transitions.set(s, new Map());
       for (const a of actlist) {
-        transitions.get(s).set(a, this.calculateT(s, a));
+        transitions.get(s).set(a, GridMDP.calculateT(s, a));
       }
     }
 
-    super(init, actlist=actlist, terminals=terminals, transitions=transitions,
-      reward=reward, states=states, gamma=gamma);
+    super(init, actlist, terminals, states, transitions, reward, gamma);
   }
 
-  calculateT(state, action) {
+  static calculateT(state, action) {
     if (action) {
       return [
-        [0.8, this.go(state, action)],
-        [0.1, this.go(state, turnRight(action))],
-        [0.1, this.go(state, turnLeft(action))],
+        [0.8, GridMDP.go(state, action)],
+        [0.1, GridMDP.go(state, turnRight(action))],
+        [0.1, GridMDP.go(state, turnLeft(action))],
       ];
 
     } else {
@@ -209,7 +214,7 @@ class GridMDP extends MDP {
   }
 
   // O estado resultante de ir nessa direção.
-  go(state, direction) {
+  static go(state, direction) {
     let s = vectorAdd(strToArr(state), strToArr(direction));
     return s.toString();
   }
@@ -234,6 +239,7 @@ class QLearningAgent {
     this.s = null;
     this.a = null;
     this.r = null;
+    this.alpha = alpha;
   }
 
   // Função de exploração.
@@ -243,19 +249,19 @@ class QLearningAgent {
 
   // Ações disponíveis no estado.
   actionsInState(state) {
-    if (this.terminals.contains(state.toString())) {
+    if (this.terminals.includes(state.toString())) {
       return [null];
     } else {
-      return this.actlist;
+      return this.allAct;
     }
   }
 
   call(percept) {
-    let [s1, r1] = updateState(percept);
+    let [s1, r1] = this.updateState(percept);
     let [Q, Nsa, s, a, r] = [this.Q, this.Nsa, this.s, this.a, this.r];
-    let actionsInState = this.actionsInState;
+    let [alpha, gamma, terminals] = [this.alpha, this.gamma, this.terminals];
 
-    if (terminals.includes(s.toString())) {
+    if (this.terminals.includes(String(s))) {
       Q.set([s,null].toString(), r1);
     }
 
@@ -265,19 +271,19 @@ class QLearningAgent {
       Nsa.inc(k, 1);
 
       let max = -Infinity;
-      for (const a1 of actionsInState(s1)) {
+      for (const a1 of this.actionsInState(s1)) {
         let x = Q.get([s1, a1].toString());
         max = Math.max(max, x);
       }
-      Q.inc(k, alpha(Nsa.get(k) * (r + gamma * max - Q.get(k))));
+      Q.inc(k, alpha(Nsa.get(k)) * (r + gamma * max - Q.get(k)));
     }
 
-    if (terminals.includes(s.toString())) {
+    if (this.terminals.includes(String(s))) {
       this.s = this.a = this.r = null;
     } else {
       [this.s, this.r] = s1, r1;
       let k = [s1, r1].toString();
-      this.a = maxBy(actionsInState(s1), a1 => this.f(Q.get(k), Ns.get(k)));
+      this.a = maxBy(this.actionsInState(s1), a1 => this.f(Q.get(k), Nsa.get(k)));
     }
     return this.a;
   }
@@ -292,3 +298,60 @@ class QLearningAgent {
  * Testes.
  * ----------------------------------------------------------------------------
  */
+
+let sequentialDecisionEnvironment = new GridMDP(
+  [[-0.04, -0.04, -0.04, +1],
+  [-0.04, null, -0.04, -1],
+  [-0.04, -0.04, -0.04, -0.04]],
+  [[3, 2], [3, 1]],
+);
+
+function runSingleTrial(agentProgram, mdp) {
+
+  // Seleciona o resultados de executar ação a em estado s.
+  // Amostragem ponderada.
+  console.log(mdp.transitions);
+  let takeSingleAction = (mdp, s, a) => {
+    let x = Math.random();
+    let cumulativeProbability = 0.0;
+    for (const probabilityState of mdp.T(s, a)) {
+      let [probability, state] = probabilityState;
+      cumulativeProbability += probability;
+      if (x < cumulativeProbability) {
+        return state;
+      }
+    }
+  };
+
+  let currentState = mdp.init;
+  while (true) {
+    let currentReward = mdp.R(currentState);
+    let percept = [currentState, currentReward];
+    let nextAction = agentProgram.call(percept);
+    if (nextAction == null) {
+      break;
+    }
+
+    currentState = takeSingleAction(mdp, currentState, nextAction);
+  }
+}
+
+function testQLearningAgent() {
+  let qAgent = new QLearningAgent(
+    sequentialDecisionEnvironment,
+    5,
+    2, 
+    n => 60 / (59 + n),
+  );
+
+  for (let i = 0; i < 200; i++) {
+    runSingleTrial(qAgent, sequentialDecisionEnvironment);
+  }
+
+  let pair1 = [[0, 1], [0, 1]].toString();
+  console.log(qAgent.Q.get(pair1) >= -0.5);
+  let pair2 = [[1, 0], [0, -1]].toString();
+  console.log(qAgent.Q.get(pair2) <= 0.5);
+}
+
+testQLearningAgent();
