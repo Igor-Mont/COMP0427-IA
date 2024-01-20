@@ -5,7 +5,12 @@
  * Q-Learning deve resolver, assim como instâncias dessas categorias. 
  * Esses tipos são: MDP, GridMDP e QLearningAgent.
  *
- * Algumas função auxiliares/utils também são definidas.
+ * Algumas funções auxiliares/utils também são definidas.
+ *
+ * Como JS não tem um tipo de sequência imutável (tupla), arrays transformadas em
+ * strings são usadas dessa forma.
+ * Sempre que um tipo "tupla" é desejado, usa-se arrays transformadas em
+ * strings: [1, 2] => '1,2'.
  * ----------------------------------------------------------------------------
  */
 
@@ -54,11 +59,10 @@ function vectorAdd(xs, ys) {
 }
 
 function maxBy(a, keyFunc) {
-  let arr = a instanceof Iterator ? [...a] : a;
-  if (arr.length === 0) {
+  if (a.length === 0) {
     return undefined;
   }
-  return arr.reduce((max, current) => (keyFunc(current) > keyFunc(max) ? current : max), arr[0]);
+  return a.reduce((max, current) => (keyFunc(current) > keyFunc(max) ? current : max), a[0]);
 }
 
 
@@ -118,7 +122,7 @@ class MDP {
     // uma string representando um estado.
     this.transitions = transitions || new Map();
 
-    if (this.reward == null) {
+    if (reward == null) {
       this.reward = new Map();
       for (const s of this.states) {
         // strings são mais apropriadas para chaves.
@@ -169,6 +173,10 @@ class MDP {
 
 class GridMDP extends MDP {
   constructor(grid, terminals, init = [0, 0], gamma=0.9) {
+    // Essa chamada sem sentido é feita pq JS não perto uso do this antes do
+    // construtor da classe derivada ser chamada.
+    super([], [], [], []);
+
     let actlist = orientations.map(String);
     let reward = new Map();
     let states = new Set();
@@ -189,23 +197,31 @@ class GridMDP extends MDP {
       }
     }
 
+    this.actlist = actlist;
+    this.reward = reward;
+    this.states = states;
+    this.gamma = gamma;
+    this.init = init;
+    this.terminals = terminals.map(String);
+
     let transitions = new Map();
     for (const s of states) {
       transitions.set(s, new Map());
       for (const a of actlist) {
-        transitions.get(s).set(a, GridMDP.calculateT(s, a));
+        transitions.get(s).set(a, this.calculateT(s, a));
       }
     }
 
-    super(init, actlist, terminals, states, transitions, reward, gamma);
+    this.transitions = transitions;
   }
 
-  static calculateT(state, action) {
+
+  calculateT(state, action) {
     if (action) {
       return [
-        [0.8, GridMDP.go(state, action)],
-        [0.1, GridMDP.go(state, turnRight(action))],
-        [0.1, GridMDP.go(state, turnLeft(action))],
+        [0.8, this.go(state, action)],
+        [0.1, this.go(state, turnRight(action))],
+        [0.1, this.go(state, turnLeft(action))],
       ];
 
     } else {
@@ -214,9 +230,10 @@ class GridMDP extends MDP {
   }
 
   // O estado resultante de ir nessa direção.
-  static go(state, direction) {
+  go(state, direction) {
     let s = vectorAdd(strToArr(state), strToArr(direction));
-    return s.toString();
+    s = s.toString();
+    return this.states.has(s) ? s : state;
   }
 }
 
@@ -261,7 +278,7 @@ class QLearningAgent {
     let [Q, Nsa, s, a, r] = [this.Q, this.Nsa, this.s, this.a, this.r];
     let [alpha, gamma, terminals] = [this.alpha, this.gamma, this.terminals];
 
-    if (this.terminals.includes(String(s))) {
+    if (terminals.includes(String(s))) {
       Q.set([s,null].toString(), r1);
     }
 
@@ -278,12 +295,14 @@ class QLearningAgent {
       Q.inc(k, alpha(Nsa.get(k)) * (r + gamma * max - Q.get(k)));
     }
 
-    if (this.terminals.includes(String(s))) {
+    if (terminals.includes(String(s))) {
       this.s = this.a = this.r = null;
     } else {
-      [this.s, this.r] = s1, r1;
-      let k = [s1, r1].toString();
-      this.a = maxBy(this.actionsInState(s1), a1 => this.f(Q.get(k), Nsa.get(k)));
+      [this.s, this.r] = [s1, r1];
+      this.a = maxBy(this.actionsInState(s1), a1 => this.f(
+        Q.get([s1, a1].toString()),
+        Nsa.get([s1, a1].toString()))
+      );
     }
     return this.a;
   }
@@ -310,7 +329,6 @@ function runSingleTrial(agentProgram, mdp) {
 
   // Seleciona o resultados de executar ação a em estado s.
   // Amostragem ponderada.
-  console.log(mdp.transitions);
   let takeSingleAction = (mdp, s, a) => {
     let x = Math.random();
     let cumulativeProbability = 0.0;
