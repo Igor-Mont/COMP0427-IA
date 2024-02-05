@@ -7,16 +7,17 @@ type Cpt = number | MapCptInput;
 type ParentValues = Map<string, boolean>;
 
 class BayesNode {
-  private parents!: string[];
-  private cpt!: MapCpt;
-  private variable!: string;
-  private children: string[] = [];
+  parents!: string[];
+  cpt!: MapCpt;
+  variable!: string;
+  children: BayesNode[] = [];
 
   // Use cpt: number when it has no parents
   constructor(X: string, parents: string | string[], cpt: Cpt) {
-    if (typeof parents === "string") parents = parents.split(" ");
+    if (typeof parents === "string")
+      parents = parents ? parents.split(" ") : [];
 
-    if (typeof parents === "number") {
+    if (typeof cpt === "number") {
       cpt = new Map<boolean[], number>([[[], cpt as number]]);
     } else if (cpt instanceof Map) {
       const cptMap = cpt as MapCpt;
@@ -77,6 +78,7 @@ class BayesNode {
     if (!(cpt instanceof Map))
       throw new Error("Assertion Failed: Parameter cpt in invalid format.");
     [...cpt.entries()].forEach(([vs, p]) => {
+      console.log({ vs });
       if (!(Array.isArray(vs) && vs.length === parents.length)) {
         throw new Error(
           "Assertion failed: Tuple length must match the number of parents."
