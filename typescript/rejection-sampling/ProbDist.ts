@@ -1,15 +1,13 @@
-type Freq = Record<string, number> | null;
+class ProbDist<T> {
+  private prob: Map<T, number>;
+  private values: T[];
 
-class ProbDist {
-  private prob: Map<string, number>;
-  private values: string[];
-
-  constructor(private var_name = "?", freq: Freq = null) {
+  constructor(private var_name = "?", freq: Map<T, number> | null = null) {
     this.prob = new Map();
     this.values = [];
 
     if (freq) {
-      const items = Object.entries(freq);
+      const items = [...freq.entries()];
       items.forEach(([v, p]) => {
         if (!this.values.includes(v)) this.values.push(v);
         this.prob.set(v, p);
@@ -18,7 +16,7 @@ class ProbDist {
     }
   }
 
-  private normalize(): ProbDist {
+  private normalize(): ProbDist<T> {
     const probValues = this.prob.values();
     const total = [...probValues].reduce((acc, value) => acc + value, 0);
 
@@ -31,8 +29,8 @@ class ProbDist {
     return this;
   }
 
-  private show_approx(maxDecimalCase = 3) {
-    const sortedProbabilities: [string, number][] = Array.from(
+  show_approx(maxDecimalCase = 3) {
+    const sortedProbabilities: [T, number][] = Array.from(
       this.prob.entries()
     ).sort(([a], [b]) => (a < b ? -1 : 1));
 
@@ -45,9 +43,28 @@ class ProbDist {
     return formattedProbabilities.join(", ");
   }
 
+  getValue(key: T): number {
+    const result = this.prob.get(key);
+    if (!result) throw new Error("Key not found in prob.");
+
+    return result;
+  }
+
   show() {
     return `P(${this.var_name})`;
   }
 }
 
+// const p = new ProbDist(
+//   "X",
+//   new Map([
+//     ["lo", 125],
+//     ["med", 375],
+//     ["hi", 500],
+//   ])
+// );
+// console.log(p.show());
+// console.log(p.getValue("lo"));
+// console.log(p.getValue("med"));
+// console.log(p.getValue("hi"));
 export { ProbDist };

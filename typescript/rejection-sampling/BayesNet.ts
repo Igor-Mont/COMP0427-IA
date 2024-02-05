@@ -47,7 +47,7 @@ class BayesNet {
     return parentNode;
   }
 
-  variable_values(): boolean[] {
+  variable_values(variable?: string): boolean[] {
     return [true, false];
   }
 
