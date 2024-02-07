@@ -54,6 +54,30 @@ class BayesNet {
   }
 }
 
+
+/*
+ * Returns the values of variables in an event.
+ *
+ * event: map of variables to their values, or an array of values.
+ * variables: array of variable names.
+ */
+const eventValues(event, vars) {
+  if (Array.isArray(event) && event.length === variables.length) {
+    return event;
+  }
+  else {
+    let values = [];
+    for (const v of vars) {
+      values.push(event.get(v));
+    }
+    return values;
+  }
+}
+
+/*
+ * A conditional probability distribution for a boolean variable.
+ * Patrt of a BayesNet.
+ */
 class BayesNode {
   /*
    * - variable: Variable name.
@@ -68,12 +92,33 @@ class BayesNode {
    * [[T,T], 0.2], [[T,F], 0.3], [[F,T], 0.5], [[F,F], 0.7]
    * ]);
    */
-
   constructor(X, parents, cpt) {
     if (typeof parents === 'string') {
       parents = parents.split(' ');
+    }
     if (typeof cpt === 'number') {
       cpt = new Map([['', cpt]]);
     }
+
+    this.variable = X;
+    this.parents = parents;
+    this.cpt = cpt;
+    this.children = [];
+  }
+
+  /*
+   * Return the conditional probability * P(X=value | parents=parentValues).
+   * parentValues come from events.
+   */
+  p(value, event) {
+    let ptrue = this.cpt.get(eventValues(event, this.parents));
+    return value ? ptrue : 1 - ptrue;
+  }
+
+  /*
+   * Return the true/false according to the CPT row for the event.
+   */
+  sample(event) {
+    return probability(this.p(true, event));
   }
 }
