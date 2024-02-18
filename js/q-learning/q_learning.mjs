@@ -14,81 +14,7 @@
  * ----------------------------------------------------------------------------
  */
 
-/*
- * ----------------------------------------------------------------------------
- * Utils.
- * ----------------------------------------------------------------------------
- */
-
-// Converte uma string da forma 'x<sep>y<sep>z<sep>...' numa array numérica [x, y, z].
-function strToArr(s, sep = ',') {
-  return s.split(sep).map(Number);
-}
-
-const [EAST, NORTH, WEST, SOUTH] = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-const orientations = [EAST, NORTH, WEST, SOUTH];
-
-const [LEFT, RIGHT] = [+1, -1];
-
-function turnHeading(heading, inc, headings=orientations.map(String)) {
-  let idx = headings.indexOf(heading) + inc;
-  if (idx == -1) {
-    idx = headings.length;
-  }
-  idx = idx % headings.length;
-  return headings[idx];
-}
-
-function turnRight(heading) {
-  return turnHeading(heading, RIGHT);
-}
-
-function turnLeft(heading) {
-  return turnHeading(heading, LEFT);
-}
-
-function vectorAdd(xs, ys) {
-  if (xs.length != ys.length) {
-    return null;
-  }
-  let sum = new Array(xs.length).fill(0);
-  for (let i = 0; i < xs.length; i++) {
-    sum[i] += xs[i] + ys[i];
-  }
-  return sum;
-}
-
-function maxBy(a, keyFunc) {
-  if (a.length === 0) {
-    return undefined;
-  }
-  return a.reduce((max, current) => (keyFunc(current) > keyFunc(max) ? current : max), a[0]);
-}
-
-
-// Igual um Map, mas aceita uma factory para gerar valores default
-// para keys inexistentes.
-class DefaultMap extends Map {
-  constructor(factory = null) {
-    super();
-    this.factory = factory;
-  }
-  
-  get(key) {
-    let x = super.get(key);
-    if (x == undefined && this.factory != null) {
-      x = this.factory();
-      this.set(key, x);
-    }
-    return x;
-  }
-
-  inc(key, v) {
-    let x = this.get(key);
-    this.set(key, x + v);
-  }
-}
-
+import * as utils from '../utils.mjs';
 
 /*
  * ----------------------------------------------------------------------------
@@ -177,7 +103,7 @@ class GridMDP extends MDP {
     // construtor da classe derivada ser chamada.
     super([], [], [], []);
 
-    let actlist = orientations.map(String);
+    let actlist = utils.orientations.map(String);
     let reward = new Map();
     let states = new Set();
 
@@ -220,8 +146,8 @@ class GridMDP extends MDP {
     if (action) {
       return [
         [0.8, this.go(state, action)],
-        [0.1, this.go(state, turnRight(action))],
-        [0.1, this.go(state, turnLeft(action))],
+        [0.1, this.go(state, utils.turnRight(action))],
+        [0.1, this.go(state, utils.turnLeft(action))],
       ];
 
     } else {
@@ -231,7 +157,10 @@ class GridMDP extends MDP {
 
   // O estado resultante de ir nessa direção.
   go(state, direction) {
-    let s = vectorAdd(strToArr(state), strToArr(direction));
+    let s = utils.vectorAdd(
+      utils.strToArr(state),
+      utils.strToArr(direction)
+    );
     s = s.toString();
     return this.states.has(s) ? s : state;
   }
@@ -251,8 +180,8 @@ class QLearningAgent {
     this.allAct = mdp.actlist;
     this.Ne = Ne;
     this.Rplus = Rplus;
-    this.Q = new DefaultMap(Number);
-    this.Nsa = new DefaultMap(Number);
+    this.Q = new utils.DefaultMap(Number);
+    this.Nsa = new utils.DefaultMap(Number);
     this.s = null;
     this.a = null;
     this.r = null;
@@ -299,7 +228,7 @@ class QLearningAgent {
       this.s = this.a = this.r = null;
     } else {
       [this.s, this.r] = [s1, r1];
-      this.a = maxBy(this.actionsInState(s1), a1 => this.f(
+      this.a = utils.maxBy(this.actionsInState(s1), a1 => this.f(
         Q.get([s1, a1].toString()),
         Nsa.get([s1, a1].toString()))
       );

@@ -1,7 +1,6 @@
-"use strict";
-
 // ----------------------------------------------------------------------------
 // Utils.
+import * as utils from '../utils.mjs';
 
 class MCTNode {
   constructor(state = null, parent = null, U = 0, N = 0) {
@@ -28,51 +27,18 @@ function ucb(n, C = 1.4) {
   return n.N == 0 ? Infinity : n.U / n.N + C * Math.sqrt(Math.log(n.parent.N) / n.N)
 }
 
-function isEmpty(it) {
-  for (const i of it) return false;
-  return true;
-}
-
-function maxBy(it, keyFunc) {
-  let arr = [...it];
-  if (arr.length === 0) {
-    return undefined;
-  }
-  return arr.reduce((max, current) => (keyFunc(current) > keyFunc(max) ? current : max), arr[0]);
-}
-
-// Checks if an array is in an iterable. This assumes the iterable has arrays as
-// its elements.
-function isIn(arr, iterable) {
-  for (const x of iterable) {
-    if (x.every((val, idx) => val === arr[idx])) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function randomChoice(arr) {
-  if (arr.length === 0) {
-    return undefined;
-  }
-
-  const randomIndex = Math.floor(Math.random() * arr.length);
-  return arr[randomIndex];
-}
-
 // ----------------------------------------------------------------------------
 // Monte Carlo Tree Search.
 
 function monteCarloTreeSearch(state, game, N = 1000) {
   const select = (n) => {
-    if (!isEmpty(n.children))
-      return select(maxBy(n.children.keys(), ucb));
+    if (!utils.isEmpty(n.children))
+      return select(utils.maxBy(n.children.keys(), ucb));
     return n;
   };
 
   const expand = (n) => {
-    if (isEmpty(n.children) && !game.terminal_test(n.state)) {
+    if (utils.isEmpty(n.children) && !game.terminal_test(n.state)) {
       n.children = new Map();
       game.actions(n.state).forEach((action) => {
         const newNode = new MCTNode(game.result(n.state, action), n);
@@ -85,7 +51,7 @@ function monteCarloTreeSearch(state, game, N = 1000) {
   const simulate = (game, state) => {
     const player = game.to_move(state);
     while (!game.terminal_test(state)) {
-      const action = randomChoice(game.actions(state));
+      const action = utils.randomChoice(game.actions(state));
       state = game.result(state, action);
     }
     const v = game.utility(state, player);
@@ -110,7 +76,7 @@ function monteCarloTreeSearch(state, game, N = 1000) {
     backprop(child, result);
   }
 
-  const max_state = maxBy(root.children.keys(), (p) => p.N);
+  const max_state = utils.maxBy(root.children.keys(), (p) => p.N);
   return root.children.get(max_state);
 }
 
@@ -227,7 +193,7 @@ function gen_state(to_move = 'X', x_positions = [], o_positions = [], h = 3, v =
   }
   const xSet = new Set(x_positions);
   const oSet = new Set(o_positions);
-  moves = moves.filter(pair => !isIn(pair, xSet) && !isIn(pair, oSet));
+  moves = moves.filter(pair => !utils.isIn(pair, xSet) && !utils.isIn(pair, oSet));
   const board = new Map();
   for (const pos of x_positions)
     board.set(pos.toString(), 'X');

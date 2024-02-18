@@ -61,7 +61,7 @@ class BayesNet {
  * event: map of variables to their values, or an array of values.
  * variables: array of variable names.
  */
-const eventValues(event, vars) {
+const eventValues = (event, vars) => {
   if (Array.isArray(event) && event.length === variables.length) {
     return event;
   }
