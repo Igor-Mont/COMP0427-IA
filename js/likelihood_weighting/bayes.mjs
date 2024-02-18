@@ -39,8 +39,8 @@ export class ProbDist extends Map {
  */
 export class BayesNet {
   /*
-   * nodeSpecs is an array of
-   * {variableName, parentsName, cpt} objects.
+   * nodeSpecs is an array of {variableName, parentsName, cpt} objects
+   * following topological order (parents before children).
    */
   constructor(nodeSpecs = []) {
     this.nodes = [];
