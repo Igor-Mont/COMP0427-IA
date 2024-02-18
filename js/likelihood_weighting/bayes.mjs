@@ -1,16 +1,52 @@
+import * as utils from '../utils.mjs';
+
+/*
+ * Discrete probability distribution.
+ * > P = new ProbDist('Flip'); P.set('H', 0.25); P.set('T', 0.75);
+ * > P.get('H')
+ * 0.25
+ * > P = new ProbDist('X', [['lo', 125], ['med', 375], ['hi', 500]]);
+ * > ['lo', 'med', 'hi'].map(P.get);
+ * [0.125, 0.375, 0.5]
+ */
+
+export class ProbDist extends Map {
+  /*
+   * Freqs is an array of [value, frequency] pairs.
+   * Then, ProbDist is normalized.
+   */
+  constructor(varName='?', freqs=null) {
+    super(freqs);
+    this.varName = varName;
+    if (freqs instanceof Array) {
+      this.normalize();
+    }
+  }
+
+  normalize() {
+    let total = utils.sum(this.values());
+    if (!utils.isClose(total, 1.0)) {
+      for (const [k, v] of this) {
+        this.set(k, v / total);
+      }
+    }
+    return this;
+  }
+}
+
 /*
  * A Bayesian Net of boolean-variables nodes.
  */
-class BayesNet {
+export class BayesNet {
   /*
-   * node_specs is an array of
+   * nodeSpecs is an array of
    * {variableName, parentsName, cpt} objects.
    */
-  constructor(node_specs = []) {
+  constructor(nodeSpecs = []) {
     this.nodes = [];
     this.variables = [];
-    for (const node_spec of node_specs) {
-      this.add(node_spec);
+    for (const nodeSpec of nodeSpecs) {
+      this.add(nodeSpec);
     }
   }
 
@@ -19,11 +55,11 @@ class BayesNet {
    * - All parents already present in the net.
    * - The node's variable isn't present yet.
    */
-  add(node_spec) {
+  add(nodeSpec) {
     node = new BayesNode(
-      node_spec.variableName,
-      node_spec.parentsName,
-      node_spec.cpt
+      nodeSpec.variableName,
+      nodeSpec.parentsName,
+      nodeSpec.cpt
     );
 
     this.nodes.push(node);
@@ -61,7 +97,7 @@ class BayesNet {
  * event: map of variables to their values, or an array of values.
  * variables: array of variable names.
  */
-const eventValues = (event, vars) => {
+export function eventValues(event, vars) {
   if (Array.isArray(event) && event.length === variables.length) {
     return event;
   }
@@ -78,7 +114,7 @@ const eventValues = (event, vars) => {
  * A conditional probability distribution for a boolean variable.
  * Patrt of a BayesNet.
  */
-class BayesNode {
+export class BayesNode {
   /*
    * - variable: Variable name.
    * - parents: iterable of variable names or space-separated string.
@@ -97,7 +133,7 @@ class BayesNode {
       parents = parents.split(' ');
     }
     if (typeof cpt === 'number') {
-      cpt = new Map([['', cpt]]);
+      cpt = new StringMap([['', cpt]]);
     }
 
     this.variable = X;
@@ -119,6 +155,7 @@ class BayesNode {
    * Return the true/false according to the CPT row for the event.
    */
   sample(event) {
-    return probability(this.p(true, event));
+    let p = this.p(true, event);
+    return utils.probability(p);
   }
 }

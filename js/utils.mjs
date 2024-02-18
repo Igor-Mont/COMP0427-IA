@@ -27,8 +27,22 @@ export class DefaultMap extends Map {
   }
 }
 
+// Um Map que transforma as chaves em strings.
+// Útil quando as chaves são reference types.
+export class StringMap extends Map {
+  get(key) {
+    let strKey = JSON.stringify(key);
+    return super.get(strKey);
+  }
+
+  set(key, value) {
+    let strKey = JSON.stringify(key);
+    return super.set(strKey, value);
+  }
+}
+
 // ----------------------------------------------------------------------------
-// Funções sobre arrays.
+// Utils de arrays e outros iterables.
 // ----------------------------------------------------------------------------
 
 export function maxBy(it, f) {
@@ -71,12 +85,35 @@ export function isIn(arr, it) {
   return xs.indexOf(e) !== -1;
 }
 
+export function sum(it) {
+  let xs = [...it].reduce((acc, x) => acc + x, 0);
+  return xs;
+}
+
+// ----------------------------------------------------------------------------
+// Probabilidade e outras utils matemáticas.
+// ----------------------------------------------------------------------------
+
 /*
  * Faz uma escolha aleatória-uniforme de um elemento de arr.
  */
 export function randomChoice(arr) {
   const randomIndex = Math.floor(Math.random() * arr.length);
   return arr[randomIndex];
+}
+
+/*
+ * Retorna true se x e y estão arbitrariamente próximos.
+ */
+export function isClose(x, y, eps=Number.EPSILON) {
+  return Math.abs(x - y) > eps;
+}
+
+/*
+ * Retorna true com probabilidade p.
+ */
+export function probability(p) {
+  return p > Math.random();
 }
 
 // ----------------------------------------------------------------------------
