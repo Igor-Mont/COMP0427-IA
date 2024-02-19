@@ -1,5 +1,7 @@
 // Utils genéricas.
 
+import { readFileSync } from 'node:fs';
+
 // ----------------------------------------------------------------------------
 // Estruturas de dados.
 // ----------------------------------------------------------------------------
@@ -41,11 +43,36 @@ export class StringMap extends Map {
   }
 }
 
+export class Range {
+  constructor(from, to) {
+    if (!to) {
+      this.from = 0;
+      this.to = from;
+    } else {
+      this.from = from;
+      this.to = to;
+    }
+  }
+
+  includes(x) {
+    return this.from <= x && x <= this.to;
+  }
+  
+  *[Symbol.iterator]() {
+    for (let x = Math.ceil(this.from); x <= this.to; x++) {
+      yield x;
+    }
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Utils de arrays e outros iterables.
 // ----------------------------------------------------------------------------
 
-export function maxBy(it, f) {
+/*
+ * Return element e with maximum f(e).
+ */
+export function maxBy(it, f=identity) {
   let arr = [...it];
   if (arr.length === 0) {
     return undefined;
@@ -82,7 +109,7 @@ export function vectorAdd(xs, ys) {
 export function isIn(arr, it) {
   let xs = [...it].map((x) => JSON.stringify(x));
   let e = JSON.stringify(arr);
-  return xs.indexOf(e) !== -1;
+  return xs.includes(e);
 }
 
 export function sum(it) {
@@ -90,10 +117,110 @@ export function sum(it) {
   return xs;
 }
 
+// True if all elements in it are true.
+export function all(it) {
+  return [...it].reduce((acc, x) => x && acc, true);
+}
+
+/*
+ * Retorna uma cópia de seq com todas as ocorrências de item removidas.
+ */
+export function removeAll(item, seq) {
+  if (typeof seq === 'string') {
+    return seq.replaceAll(item, '');
+  }
+  else {
+    let xs = [...seq];
+    return xs.filter(x => x !== item);
+  }
+}
+
+/*
+ * Remove duplicatas em seq.
+ */
+export function unique(seq) {
+  return [...new Set(seq)];
+}
+
+/*
+ * Retorna o i-ésimo elemento de cada array em arrs.
+ */
+export function ith(i, arrs) {
+  let result = [];
+  for (const arr of arrs) {
+    result.push(arr[i]);
+  }
+  return result;
+}
+
+/*
+ * Replica o elemento x n vezes.
+ * O parâmetro copyEach controla se uma cópia de x será feita n vezes.
+ * Esse parâmetro só faz sentido se x for de reference type.
+ *
+ * > replicate(3, 9)
+ * [9, 9, 9]
+ * > replicate(4, [0, 1])
+ * [[0, 1], [0, 1], [0, 1], [0, 1]]
+ */
+export function replicate(n, x, copyEach=false) {
+  let xs = [];
+  for (let i = 0; i < n; i++) {
+    let item;
+    if (copyEach && (typeof x === 'object')) {
+      item = {...x};
+    } else {
+      item = x;
+    }
+    xs.push(item);
+  }
+  return xs;
+}
+
+/*
+ * > zip([1, 2, 10], [3, 4], [5, 6], [7, 8, 9])
+ * [[1, 3, 5, 7], [2, 4, 6, 8]]
+ */
+export function zip(...arrs) {
+  let lengths = arrs.map(a => a.length);
+  let n = Math.min(...lengths);
+  let result = [];
+  for (let i = 0; i < n; i++) {
+    result.push(ith(i, arrs));
+  }
+  return result;
+}
+
+/*
+ * In-place removal of first-ocurrence of x in xs.
+ */
+export function remove(x, xs) {
+  let i = xs.indexOf(x);
+  xs.splice(i, 1);
+}
+
 // ----------------------------------------------------------------------------
 // Probabilidade e outras utils matemáticas.
 // ----------------------------------------------------------------------------
 
+export function identity(x) {
+  return x;
+}
+
+export const argmax = maxBy;
+
+// "Embaralha" a cópia de um iterable.
+export function shuffled(it) {
+  let xs = [...it];
+  let n = xs.length;
+  let result = [];
+  for (let i = 0; i < n; i++) {
+    let x = randomChoice(xs);
+    remove(x, xs);
+    result.push(x);
+  }
+  return result;
+}
 /*
  * Faz uma escolha aleatória-uniforme de um elemento de arr.
  */
@@ -114,6 +241,44 @@ export function isClose(x, y, eps=Number.EPSILON) {
  */
 export function probability(p) {
   return p > Math.random();
+}
+
+/*
+ * Multiplica cada número por uma constante tal que a soma é 1.
+ */
+export function normalize(dist) {
+  let total;
+  if (dist instanceof Map) {
+    total = sum(dist.values());
+    for (const [k, v] of dist) {
+      dist.set(k, v / total);
+    }
+    return dist;
+  }
+  total = sum(dist);
+  return dist.map(n => n / total);
+}
+
+// ----------------------------------------------------------------------------
+// Leitura e parse de arquivos.
+// ----------------------------------------------------------------------------
+
+export function atom(x) {
+  return isNan(Number(x)) ? Number(x) : String(x);
+}
+
+export function openData(name) {
+  let filePath = '../data/' + name;
+  return readFileSync(filePath, 'utf8');
+}
+
+export function lines(input, lineEnd='\n') {
+  return input.split(lineEnd);
+}
+
+export function parseCsv(input, delim=',') {
+  return lines(input)
+         .map(l => l.split(delim).map(atom));
 }
 
 // ----------------------------------------------------------------------------
