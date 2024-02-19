@@ -55,19 +55,21 @@ export class BayesNet {
    * - All parents already present in the net.
    * - The node's variable isn't present yet.
    */
-  add(nodeSpec) {
-    node = new BayesNode(
-      nodeSpec.variableName,
-      nodeSpec.parentsName,
-      nodeSpec.cpt
+  add(node_spec) {
+    const node = new BayesNode(
+      node_spec.variable,
+      node_spec.parents,
+      node_spec.cpt
     );
 
     this.nodes.push(node);
     this.variables.push(node.variable);
     for (const parent of node.parents) {
-      this.variableNode(parent).children.append(node);
+      const newVariable = this.variableNode(parent);
+      if (newVariable)
+        newVariable.children.push(node);
     }
-  }
+  } 
 
   /*
    * Returns the node for variable.
@@ -159,3 +161,100 @@ export class BayesNode {
     return utils.probability(p);
   }
 }
+
+function likelihood_weighting(X, e, bn, N=10000) {
+  /*
+     * Estimate the probability distribution of variable X given
+     * evidence e in BayesNet bn.
+     */
+  let W = {};
+  bn.variableValues(X).forEach(value => {
+    W[value] = 0;
+  });
+
+  for (let j = 0; j < N; j++) {
+    let sample_weight = weighted_sample(bn, e); // boldface x, w in [Figure 14.15]
+    let sample = sample_weight[0];
+    let weight = sample_weight[1];
+    W[sample[X]] += weight;
+  }
+
+  return utils.normalize(W);
+}
+
+function weighted_sample(bn, e) {
+  /*
+     * Sample an event from bn that's consistent with the evidence e;
+     * return the event and its weight, the likelihood that the event
+     * accords to the evidence.
+  */
+
+  let w = 1;
+  let event = Object.assign({}, e); // boldface x in [Figure 14.15]
+  bn.nodes.forEach(node => {
+    let Xi = node.variable;
+    if (Xi in e) {
+      w *= node.p(e[Xi], event);
+    } else {
+      event[Xi] = node.sample(event);
+    }
+  });
+
+  return [event, w];
+}
+
+const bNode = {
+  variable: "Alarm",
+  parents: "Burglary Earthquake",
+  cpt: new Map([
+    [[true, true], 0.95],
+    [[true, false], 0.94],
+    [[false, true], 0.29],
+    [[false, false], 0.001],
+  ])
+};
+
+const johnCallsNode = {
+  variable: "JohnCalls",
+  parents: "Alarm",
+  cpt: new Map([
+    [true, 0.9],
+    [false, 0.05],
+  ])
+};
+
+const maryCallsNode = {
+  variable: "MaryCalls",
+  parents: "Alarm",
+  cpt: new Map([
+    [true, 0.7],
+    [false, 0.01],
+  ])
+};
+
+const burglaryNode = {
+  variable: "Burglary",
+  parents: [],
+  cpt: new Map([
+    [true, 0.001],
+    [false, 0.999],
+  ])
+};
+
+const earthquakeNode = {
+  variable: "Earthquake",
+  parents: [],
+  cpt: new Map([
+    [true, 0.002],
+    [false, 0.998],
+  ])
+};
+
+const bn = new BayesNet();
+bn.add(bNode);
+bn.add(johnCallsNode);
+bn.add(maryCallsNode);
+bn.add(burglaryNode);
+bn.add(earthquakeNode);
+
+console.log(bn)
