@@ -1,4 +1,7 @@
+import { cp } from 'fs';
 import * as utils from '../utils.mjs';
+import { StringMap } from '../utils.mjs';
+import { connect } from 'http2';
 
 /*
  * Discrete probability distribution.
@@ -106,7 +109,7 @@ export function eventValues(event, vars) {
   else {
     let values = [];
     for (const v of vars) {
-      values.push(event.get(v));
+      values.push(event[v]);
     }
     return values;
   }
@@ -149,7 +152,13 @@ export class BayesNode {
    * parentValues come from events.
    */
   p(value, event) {
-    let ptrue = this.cpt.get(eventValues(event, this.parents));
+    let resultado = eventValues(event, this.parents)
+    if (resultado.length == 0) 
+      resultado = "" 
+    else if(resultado.length == 1)
+      resultado = resultado[0]
+
+    let ptrue = this.cpt.get(resultado);
     return value ? ptrue : 1 - ptrue;
   }
 
@@ -162,7 +171,7 @@ export class BayesNode {
   }
 }
 
-function likelihood_weighting(X, e, bn, N=10000) {
+function likelihood_weighting(X, e, bn, N=100000) {
   /*
      * Estimate the probability distribution of variable X given
      * evidence e in BayesNet bn.
@@ -206,7 +215,7 @@ function weighted_sample(bn, e) {
 const bNode = {
   variable: "Alarm",
   parents: "Burglary Earthquake",
-  cpt: new Map([
+  cpt: new StringMap([
     [[true, true], 0.95],
     [[true, false], 0.94],
     [[false, true], 0.29],
@@ -217,7 +226,7 @@ const bNode = {
 const johnCallsNode = {
   variable: "JohnCalls",
   parents: "Alarm",
-  cpt: new Map([
+  cpt: new StringMap([
     [true, 0.9],
     [false, 0.05],
   ])
@@ -226,7 +235,7 @@ const johnCallsNode = {
 const maryCallsNode = {
   variable: "MaryCalls",
   parents: "Alarm",
-  cpt: new Map([
+  cpt: new StringMap([
     [true, 0.7],
     [false, 0.01],
   ])
@@ -235,19 +244,13 @@ const maryCallsNode = {
 const burglaryNode = {
   variable: "Burglary",
   parents: [],
-  cpt: new Map([
-    [true, 0.001],
-    [false, 0.999],
-  ])
+  cpt: 0.001,
 };
 
 const earthquakeNode = {
   variable: "Earthquake",
   parents: [],
-  cpt: new Map([
-    [true, 0.002],
-    [false, 0.998],
-  ])
+  cpt: 0.002
 };
 
 const bn = new BayesNet();
@@ -257,4 +260,8 @@ bn.add(maryCallsNode);
 bn.add(burglaryNode);
 bn.add(earthquakeNode);
 
-console.log(bn)
+const X = 'Alarm'; // Variável para a qual deseja estimar a distribuição de probabilidade
+const e = { maryCallsNode: true }; // Evidência fornecida
+
+const resultado = likelihood_weighting(X, e, bn);
+console.log(resultado);
