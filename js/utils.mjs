@@ -1,6 +1,7 @@
 // Utils genéricas.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync } from "node:fs";
+import * as path from "node:path";
 
 // ----------------------------------------------------------------------------
 // Estruturas de dados.
@@ -43,6 +44,7 @@ export class StringMap extends Map {
   }
 }
 
+// A range in [from, to).
 export class Range {
   constructor(from, to) {
     if (!to) {
@@ -55,11 +57,11 @@ export class Range {
   }
 
   includes(x) {
-    return this.from <= x && x <= this.to;
+    return this.from <= x && x < this.to;
   }
   
   *[Symbol.iterator]() {
-    for (let x = Math.ceil(this.from); x <= this.to; x++) {
+    for (let x = Math.ceil(this.from); x < this.to; x++) {
       yield x;
     }
   }
@@ -106,10 +108,10 @@ export function vectorAdd(xs, ys) {
  * > isIn([[1, 2], [3, 4]], [3, 5])
  * false
  */
-export function isIn(arr, it) {
+export function isIn(e, it) {
   let xs = [...it].map((x) => JSON.stringify(x));
-  let e = JSON.stringify(arr);
-  return xs.includes(e);
+  let x = JSON.stringify(e);
+  return xs.includes(x);
 }
 
 export function sum(it) {
@@ -126,8 +128,8 @@ export function all(it) {
  * Retorna uma cópia de seq com todas as ocorrências de item removidas.
  */
 export function removeAll(item, seq) {
-  if (typeof seq === 'string') {
-    return seq.replaceAll(item, '');
+  if (typeof seq === "string") {
+    return seq.replaceAll(item, "");
   }
   else {
     let xs = [...seq];
@@ -167,7 +169,7 @@ export function replicate(n, x, copyEach=false) {
   let xs = [];
   for (let i = 0; i < n; i++) {
     let item;
-    if (copyEach && (typeof x === 'object')) {
+    if (copyEach && (typeof x === "object")) {
       item = {...x};
     } else {
       item = x;
@@ -182,8 +184,7 @@ export function replicate(n, x, copyEach=false) {
  * [[1, 3, 5, 7], [2, 4, 6, 8]]
  */
 export function zip(...arrs) {
-  let lengths = arrs.map(a => a.length);
-  let n = Math.min(...lengths);
+  let n = arrs[0].length;
   let result = [];
   for (let i = 0; i < n; i++) {
     result.push(ith(i, arrs));
@@ -264,21 +265,22 @@ export function normalize(dist) {
 // ----------------------------------------------------------------------------
 
 export function atom(x) {
-  return isNan(Number(x)) ? Number(x) : String(x);
+  return isNaN(Number(x)) ? String(x) : Number(x);
 }
 
 export function openData(name) {
-  let filePath = '../data/' + name;
-  return readFileSync(filePath, 'utf8');
+  let filePath = path.resolve("data", name);
+  return readFileSync(filePath, "utf8");
 }
 
-export function lines(input, lineEnd='\n') {
+export function lines(input, lineEnd="\n") {
   return input.split(lineEnd);
 }
 
-export function parseCsv(input, delim=',') {
+export function parseCsv(input, delim=",") {
   return lines(input)
-         .map(l => l.split(delim).map(atom));
+    .slice(0, -1)
+    .map(l => l.split(delim).map(atom));
 }
 
 // ----------------------------------------------------------------------------
@@ -312,6 +314,6 @@ export function turnLeft(heading) {
 // ----------------------------------------------------------------------------
 
 // Converte uma string da forma 'x<sep>y<sep>z<sep>...' numa array numérica [x, y, z].
-export function strToArr(s, sep=',') {
+export function strToArr(s, sep=",") {
   return s.split(sep).map(Number);
 }

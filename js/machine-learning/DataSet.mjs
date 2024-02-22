@@ -1,18 +1,26 @@
-import * as utils from '../utils.mjs';
+import * as utils from "../utils.mjs";
 
 /*
  * A dataset for a machine learning problem.
  */
 export class DataSet {
-  constructor({examples=null, attrs=null, attrNames=null, name='', target=null, inputs=null, exclude=[]}) {
+  constructor({
+    examples = null,
+    attrs = null,
+    attrNames = null,
+    name = "",
+    target = -1,
+    inputs = null,
+    exclude = []
+  }) {
     this.name = name;
 
     // Initialize examples from string/list/data dir.
-    if (typeof examples === 'string') {
+    if (typeof examples === "string") {
       this.examples = utils.parseCsv(examples);
     }
     else if (!examples) {
-      let csvData = utils.openData(name + '.csv');
+      const csvData = utils.openData(name + ".csv");
       this.examples = utils.parseCsv(csvData);
     }
     else if (examples instanceof Array) {
@@ -21,21 +29,17 @@ export class DataSet {
 
     // attrs defaults to indices of examples.
     if (this.examples && !attrs) {
-      attrs = [...utils.Range(this.examples[0].length)];
+      attrs = [...new utils.Range(this.examples[0].length)];
     }
     this.attrs = attrs;
 
     // Initialize attrNames from string/list.
-    if (typeof attrNames === 'string') {
+    if (typeof attrNames === "string") {
       this.attrNames = attrNames.split();
     } else {
       this.attrNames = attrNames ?? attrs;
     }
 
-    // Target defaults to last field.
-    if (target === null) {
-      target = this.examples.length - 1;
-    }
     this.setProblem(target, inputs, exclude);
   }
 
@@ -46,7 +50,7 @@ export class DataSet {
    */
   setProblem(target, inputs=null, exclude=[]) {
     this.target = this.attrNum(target);
-    exclude = exlude.map(this.attrNum);
+    exclude = exclude.map(this.attrNum);
     if (inputs) {
       this.inputs = utils.removeAll(this.target, inputs);
     } else {
@@ -64,7 +68,7 @@ export class DataSet {
 
   // Returns the number used for attr, which is either a string or number.
   attrNum(attr) {
-    if (typeof attr === 'string') {
+    if (typeof attr === "string") {
       return this.attrNames.indexOf(attr);
     }
     else if (attr < 0) {

@@ -1,9 +1,9 @@
+/* eslint-disable no-unused-vars */
 /*
  * Types for implementing boolean decision trees.
  */
 
-import * as utils from '../utils.mjs';
-import { DataSet } from './DataSet.mjs';
+import * as utils from "../utils.mjs";
 
 /*
  * A fork on a specific attribute, with a map of branches for each of its values.
@@ -20,9 +20,9 @@ class DecisionFork {
   // Classify an example using the attribute and branches.
   classify(example) {
     let attrVal = example[this.attr];
-    if (this.branches.keys().includes(attrVal)) {
+    if (utils.isIn(attrVal, this.branches.keys())) {
       // TODO: check the type of this.
-      return this.branches.get(attrVal)(example);
+      return this.branches.get(attrVal).call(example);
     } else {
       return this.defaultChild(example);
     }
@@ -42,7 +42,7 @@ class DecisionLeaf {
     this.result = result;
   }
 
-  getResult(example) {
+  call(example) {
     return this.result;
   }
 }
@@ -51,7 +51,7 @@ class DecisionLeaf {
  * An agent that learns by first constructing a boolean decision tree and them
  * classifying new inputs.
  */
-class DecisionTreeLearner{
+export class DecisionTreeLearner {
   constructor(dataset) {
     this.dataset = dataset;
     this.tree = this.buildTree(dataset.examples, dataset.inputs);
@@ -69,14 +69,15 @@ class DecisionTreeLearner{
       return this.pluralityValue(examples);
     }
 
-    let A = this.chooseAttr(attrs, examples);
+    let A = this.chooseAttribute(attrs, examples);
     let tree = new DecisionFork(
       A,
       this.dataset.attrNames[A],
       this.pluralityValue(examples)
     );
+
     for (const [v, e] of this.splitBy(A, examples)) {
-      let subtree = this.buildTree(e, removeAll(A, attrs), examples);
+      let subtree = this.buildTree(e, utils.removeAll(A, attrs), examples);
       tree.add(v, subtree);
     }
     return tree;
@@ -113,11 +114,11 @@ class DecisionTreeLearner{
     const I = (exs) => {
       let values = [];
       for (const v of this.dataset.values[this.dataset.target]) {
-        let count = this.count(this.dataset.target, v, examples);
-        valus.push(count);
+        let count = this.count(this.dataset.target, v, exs);
+        values.push(count);
       }
       return informationContent(values);
-    }
+    };
 
     let n = examples.length;
     let entropies = [];
@@ -138,7 +139,7 @@ class DecisionTreeLearner{
       let valExamples = [];
       for (const e of examples) {
         if (e[attr] === v) {
-          valExamples.push(e)
+          valExamples.push(e);
         }
       }
 
@@ -147,7 +148,7 @@ class DecisionTreeLearner{
     return result;
   }
 
-  predict(x) {
+  call(x) {
     return this.tree.classify(x);
   }
 }
