@@ -11,19 +11,17 @@ export class DataSet {
     name = "",
     target = -1,
     inputs = null,
-    exclude = []
+    exclude = [],
   }) {
     this.name = name;
 
     // Initialize examples from string/list/data dir.
     if (typeof examples === "string") {
       this.examples = utils.parseCsv(examples);
-    }
-    else if (!examples) {
+    } else if (!examples) {
       const csvData = utils.openData(name + ".csv");
       this.examples = utils.parseCsv(csvData);
-    }
-    else if (examples instanceof Array) {
+    } else if (examples instanceof Array) {
       this.examples = examples;
     }
 
@@ -48,13 +46,15 @@ export class DataSet {
    * inputs is a list of attributes.
    * exclude is a list of attributes to not be used on inputs.
    */
-  setProblem(target, inputs=null, exclude=[]) {
+  setProblem(target, inputs = null, exclude = []) {
     this.target = this.attrNum(target);
     exclude = exclude.map(this.attrNum);
     if (inputs) {
       this.inputs = utils.removeAll(this.target, inputs);
     } else {
-      this.inputs = this.attrs.filter(a => a != this.target && !exclude.includes(a));
+      this.inputs = this.attrs.filter(
+        (a) => a != this.target && !exclude.includes(a)
+      );
     }
 
     if (!this.values) {
@@ -70,11 +70,9 @@ export class DataSet {
   attrNum(attr) {
     if (typeof attr === "string") {
       return this.attrNames.indexOf(attr);
-    }
-    else if (attr < 0) {
+    } else if (attr < 0) {
       return this.attrs.length + attr;
-    }
-    else {
+    } else {
       return attr;
     }
   }

@@ -10,7 +10,7 @@ import * as utils from "../utils.mjs";
  */
 class DecisionFork {
   // Specify for which attribute this node is for.
-  constructor(attr, attrName=null, defaultChild=null, branches=null) {
+  constructor(attr, attrName = null, defaultChild = null, branches = null) {
     this.attr = attr;
     this.attrName = attrName ?? attr;
     this.defaultChild = defaultChild;
@@ -57,8 +57,7 @@ export class DecisionTreeLearner {
     this.tree = this.buildTree(dataset.examples, dataset.inputs);
   }
 
-
-  buildTree(examples, attrs, parentExamples=[]) {
+  buildTree(examples, attrs, parentExamples = []) {
     if (examples.length === 0) {
       return this.pluralityValue(parentExamples);
     }
@@ -83,30 +82,30 @@ export class DecisionTreeLearner {
     return tree;
   }
 
-
   // Returns most frequent target in examples.
   pluralityValue(examples) {
-    let popular = utils.argmax(
-      this.dataset.values[this.dataset.target],
-      (v) => this.count(this.dataset.target, v, examples)
+    let popular = utils.argmax(this.dataset.values[this.dataset.target], (v) =>
+      this.count(this.dataset.target, v, examples)
     );
     return new DecisionLeaf(popular);
   }
 
   // Count the number of examples that have example[attr] === val.
   count(attr, val, examples) {
-    return utils.sum(examples.map(e => e[attr] === val));
+    return utils.sum(examples.map((e) => e[attr] === val));
   }
 
   // Are all the examples in the same target class?
   allSameClass(examples) {
     let firstClass = examples[0][this.dataset.target];
-    return utils.all(examples.map(e => e[this.dataset.target] === firstClass));
+    return utils.all(
+      examples.map((e) => e[this.dataset.target] === firstClass)
+    );
   }
 
   // Choose attribute with highest information gain.
   chooseAttribute(attrs, examples) {
-    return utils.argmax(attrs, a => this.informationGain(a, examples));
+    return utils.argmax(attrs, (a) => this.informationGain(a, examples));
   }
 
   // Return the expected reduction in entropy from splitting by attr.
