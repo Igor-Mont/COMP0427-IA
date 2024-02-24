@@ -14,7 +14,7 @@ export class DefaultMap extends Map {
     super();
     this.factory = factory;
   }
-  
+
   get(key) {
     let x = super.get(key);
     if (x == undefined && this.factory != null) {
@@ -27,20 +27,6 @@ export class DefaultMap extends Map {
   inc(key, v) {
     let x = this.get(key);
     this.set(key, x + v);
-  }
-}
-
-// Um Map que transforma as chaves em strings.
-// Útil quando as chaves são reference types.
-export class StringMap extends Map {
-  get(key) {
-    let strKey = JSON.stringify(key);
-    return super.get(strKey);
-  }
-
-  set(key, value) {
-    let strKey = JSON.stringify(key);
-    return super.set(strKey, value);
   }
 }
 
@@ -59,7 +45,7 @@ export class Range {
   includes(x) {
     return this.from <= x && x < this.to;
   }
-  
+
   *[Symbol.iterator]() {
     for (let x = Math.ceil(this.from); x < this.to; x++) {
       yield x;
@@ -74,12 +60,12 @@ export class Range {
 /*
  * Return element e with maximum f(e).
  */
-export function maxBy(it, f=identity) {
+export function maxBy(it, f = identity) {
   let arr = [...it];
   if (arr.length === 0) {
     return undefined;
   }
-  const max = (acc, x) => f(x) > f(acc) ? x : acc;
+  const max = (acc, x) => (f(x) > f(acc) ? x : acc);
   return arr.reduce(max, arr[0]);
 }
 
@@ -130,10 +116,9 @@ export function all(it) {
 export function removeAll(item, seq) {
   if (typeof seq === "string") {
     return seq.replaceAll(item, "");
-  }
-  else {
+  } else {
     let xs = [...seq];
-    return xs.filter(x => x !== item);
+    return xs.filter((x) => x !== item);
   }
 }
 
@@ -165,12 +150,12 @@ export function ith(i, arrs) {
  * > replicate(4, [0, 1])
  * [[0, 1], [0, 1], [0, 1], [0, 1]]
  */
-export function replicate(n, x, copyEach=false) {
+export function replicate(n, x, copyEach = false) {
   let xs = [];
   for (let i = 0; i < n; i++) {
     let item;
-    if (copyEach && (typeof x === "object")) {
-      item = {...x};
+    if (copyEach && typeof x === "object") {
+      item = { ...x };
     } else {
       item = x;
     }
@@ -233,7 +218,7 @@ export function randomChoice(arr) {
 /*
  * Retorna true se x e y estão arbitrariamente próximos.
  */
-export function isClose(x, y, eps=Number.EPSILON) {
+export function isClose(x, y, eps = Number.EPSILON) {
   return Math.abs(x - y) > eps;
 }
 
@@ -241,7 +226,7 @@ export function isClose(x, y, eps=Number.EPSILON) {
  * Retorna true com probabilidade p.
  */
 export function probability(p) {
-  return p > Math.random();
+  return `${p > Math.random()} `;
 }
 
 /*
@@ -249,15 +234,16 @@ export function probability(p) {
  */
 export function normalize(dist) {
   let total;
+  const values = Object.values(dist);
   if (dist instanceof Map) {
-    total = sum(dist.values());
+    total = sum(values);
     for (const [k, v] of dist) {
       dist.set(k, v / total);
     }
     return dist;
   }
-  total = sum(dist);
-  return dist.map(n => n / total);
+  total = sum(Object.values(dist));
+  return Object.values(dist).map((n) => n / total);
 }
 
 // ----------------------------------------------------------------------------
@@ -273,26 +259,31 @@ export function openData(name) {
   return readFileSync(filePath, "utf8");
 }
 
-export function lines(input, lineEnd="\n") {
+export function lines(input, lineEnd = "\n") {
   return input.split(lineEnd);
 }
 
-export function parseCsv(input, delim=",") {
+export function parseCsv(input, delim = ",") {
   return lines(input)
     .slice(0, -1)
-    .map(l => l.split(delim).map(atom));
+    .map((l) => l.split(delim).map(atom));
 }
 
 // ----------------------------------------------------------------------------
 // Orientações e movimentações.
 // ----------------------------------------------------------------------------
 
-export const [EAST, NORTH, WEST, SOUTH] = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+export const [EAST, NORTH, WEST, SOUTH] = [
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+  [0, -1],
+];
 export const orientations = [EAST, NORTH, WEST, SOUTH];
 
 export const [LEFT, RIGHT] = [+1, -1];
 
-export function turnHeading(heading, inc, headings=orientations.map(String)) {
+export function turnHeading(heading, inc, headings = orientations.map(String)) {
   let idx = headings.indexOf(heading) + inc;
   if (idx == -1) {
     idx = headings.length;
@@ -314,6 +305,6 @@ export function turnLeft(heading) {
 // ----------------------------------------------------------------------------
 
 // Converte uma string da forma 'x<sep>y<sep>z<sep>...' numa array numérica [x, y, z].
-export function strToArr(s, sep=",") {
+export function strToArr(s, sep = ",") {
   return s.split(sep).map(Number);
 }

@@ -1,39 +1,43 @@
-import { cp } from 'fs';
-import * as utils from '../utils.mjs';
-import { StringMap } from '../utils.mjs';
-import { connect } from 'http2';
+import * as utils from "../utils.mjs";
 
-/*
- * Discrete probability distribution.
- * > P = new ProbDist('Flip'); P.set('H', 0.25); P.set('T', 0.75);
- * > P.get('H')
- * 0.25
- * > P = new ProbDist('X', [['lo', 125], ['med', 375], ['hi', 500]]);
- * > ['lo', 'med', 'hi'].map(P.get);
- * [0.125, 0.375, 0.5]
- */
+export class ProbDist {
+  constructor(var_name = "?", freq = null) {
+    this.prob = new Map();
+    this.values = [];
 
-export class ProbDist extends Map {
-  /*
-   * Freqs is an array of [value, frequency] pairs.
-   * Then, ProbDist is normalized.
-   */
-  constructor(varName='?', freqs=null) {
-    super(freqs);
-    this.varName = varName;
-    if (freqs instanceof Array) {
+    if (freq) {
+      const items = [...freq.entries()];
+      items.forEach(([v, p]) => {
+        if (!this.values.includes(v)) this.values.push(v);
+        this.prob.set(v, p);
+      });
       this.normalize();
     }
   }
 
   normalize() {
-    let total = utils.sum(this.values());
-    if (!utils.isClose(total, 1.0)) {
-      for (const [k, v] of this) {
-        this.set(k, v / total);
+    const probValues = this.prob.values();
+    const total = [...probValues].reduce((acc, value) => acc + value, 0);
+
+    if (Math.abs(total - 1.0) > Number.EPSILON) {
+      for (const [key, value] of this.prob) {
+        this.prob.set(key, value / total);
       }
     }
+
     return this;
+  }
+
+  show_approx() {
+    const sortedProbabilities = Array.from(this.prob.entries()).sort(
+      ([a], [b]) => (a < b ? -1 : 1)
+    );
+
+    const formattedProbabilities = sortedProbabilities.map(([v, p]) => {
+      return [v, p];
+    });
+
+    return formattedProbabilities;
   }
 }
 
@@ -41,10 +45,6 @@ export class ProbDist extends Map {
  * A Bayesian Net of boolean-variables nodes.
  */
 export class BayesNet {
-  /*
-   * nodeSpecs is an array of {variableName, parentsName, cpt} objects
-   * following topological order (parents before children).
-   */
   constructor(nodeSpecs = []) {
     this.nodes = [];
     this.variables = [];
@@ -53,11 +53,6 @@ export class BayesNet {
     }
   }
 
-  /*
-   * Add a node to the net. Assumes that all invariants are held:
-   * - All parents already present in the net.
-   * - The node's variable isn't present yet.
-   */
   add(node_spec) {
     const node = new BayesNode(
       node_spec.variable,
@@ -69,14 +64,10 @@ export class BayesNet {
     this.variables.push(node.variable);
     for (const parent of node.parents) {
       const newVariable = this.variableNode(parent);
-      if (newVariable)
-        newVariable.children.push(node);
+      if (newVariable) newVariable.children.push(node);
     }
-  } 
+  }
 
-  /*
-   * Returns the node for variable.
-   */
   variableNode(variable) {
     for (const n of this.nodes) {
       if (n.variable === variable) {
@@ -87,58 +78,31 @@ export class BayesNet {
     return null;
   }
 
-  /*
-   * Returns the domain of variable.
-   */
   variableValues(variable) {
-    return [true, false];
+    return ["true ", "false "];
   }
 }
 
-
-/*
- * Returns the values of variables in an event.
- *
- * event: map of variables to their values, or an array of values.
- * variables: array of variable names.
- */
 export function eventValues(event, vars) {
-  if (Array.isArray(event) && event.length === variables.length) {
+  if (Array.isArray(event) && event.length === vars.length) {
     return event;
-  }
-  else {
-    let values = [];
+  } else {
+    let values = "";
     for (const v of vars) {
-      values.push(event[v]);
+      values = values + event[v];
     }
     return values;
   }
 }
 
-/*
- * A conditional probability distribution for a boolean variable.
- * Patrt of a BayesNet.
- */
 export class BayesNode {
-  /*
-   * - variable: Variable name.
-   * - parents: iterable of variable names or space-separated string.
-   * - cpt: the conditional probability table. Takes one of these:
-   *   - A number, the unconditional probability P(X=true).
-   *   - A StringMap, { [v1, v2, ...]:p }, the conditional probability
-   *   P(X=true | parent1=v1, parent2=v2, ...).
-   * 
-   * Example:
-   * let Z = new BayesNode('Z', 'P Q', new StringMap([
-   * [[T,T], 0.2], [[T,F], 0.3], [[F,T], 0.5], [[F,F], 0.7]
-   * ]);
-   */
   constructor(X, parents, cpt) {
-    if (typeof parents === 'string') {
-      parents = parents.split(' ');
+    if (typeof parents === "string") {
+      parents = parents.split(" ");
     }
-    if (typeof cpt === 'number') {
-      cpt = new StringMap([['', cpt]]);
+
+    if (typeof cpt === "number") {
+      cpt = { "": cpt };
     }
 
     this.variable = X;
@@ -147,44 +111,29 @@ export class BayesNode {
     this.children = [];
   }
 
-  /*
-   * Return the conditional probability * P(X=value | parents=parentValues).
-   * parentValues come from events.
-   */
   p(value, event) {
-    let resultado = eventValues(event, this.parents)
-    if (resultado.length == 0) 
-      resultado = "" 
-    else if(resultado.length == 1)
-      resultado = resultado[0]
+    let resultado = eventValues(event, this.parents);
+    if (resultado.length == 0) resultado = "";
 
-    let ptrue = this.cpt.get(resultado);
+    let ptrue = this.cpt[resultado];
     return value ? ptrue : 1 - ptrue;
   }
 
-  /*
-   * Return the true/false according to the CPT row for the event.
-   */
   sample(event) {
     let p = this.p(true, event);
     return utils.probability(p);
   }
 }
 
-function likelihood_weighting(X, e, bn, N=100000) {
-  /*
-     * Estimate the probability distribution of variable X given
-     * evidence e in BayesNet bn.
-     */
+function likelihood_weighting(X, e, bn, N = 10000) {
   let W = {};
-  bn.variableValues(X).forEach(value => {
+
+  bn.variableValues(X).forEach((value) => {
     W[value] = 0;
   });
 
   for (let j = 0; j < N; j++) {
-    let sample_weight = weighted_sample(bn, e); // boldface x, w in [Figure 14.15]
-    let sample = sample_weight[0];
-    let weight = sample_weight[1];
+    let [sample, weight] = weighted_sample(bn, e);
     W[sample[X]] += weight;
   }
 
@@ -192,15 +141,10 @@ function likelihood_weighting(X, e, bn, N=100000) {
 }
 
 function weighted_sample(bn, e) {
-  /*
-     * Sample an event from bn that's consistent with the evidence e;
-     * return the event and its weight, the likelihood that the event
-     * accords to the evidence.
-  */
-
   let w = 1;
-  let event = Object.assign({}, e); // boldface x in [Figure 14.15]
-  bn.nodes.forEach(node => {
+  let event = Object.assign({}, e);
+
+  bn.nodes.forEach((node) => {
     let Xi = node.variable;
     if (Xi in e) {
       w *= node.p(e[Xi], event);
@@ -215,30 +159,27 @@ function weighted_sample(bn, e) {
 const bNode = {
   variable: "Alarm",
   parents: "Burglary Earthquake",
-  cpt: new StringMap([
-    [[true, true], 0.95],
-    [[true, false], 0.94],
-    [[false, true], 0.29],
-    [[false, false], 0.001],
-  ])
+  cpt: {
+    "true true ": 0.95,
+    "true false ": 0.94,
+    "false true ": 0.29,
+    "false false ": 0.001,
+  },
 };
 
 const johnCallsNode = {
   variable: "JohnCalls",
   parents: "Alarm",
-  cpt: new StringMap([
-    [true, 0.9],
-    [false, 0.05],
-  ])
+  cpt: { "true ": 0.9, "false ": 0.05 },
 };
 
 const maryCallsNode = {
   variable: "MaryCalls",
   parents: "Alarm",
-  cpt: new StringMap([
-    [true, 0.7],
-    [false, 0.01],
-  ])
+  cpt: {
+    "true ": 0.7,
+    "false ": 0.01,
+  },
 };
 
 const burglaryNode = {
@@ -250,7 +191,7 @@ const burglaryNode = {
 const earthquakeNode = {
   variable: "Earthquake",
   parents: [],
-  cpt: 0.002
+  cpt: 0.002,
 };
 
 const bn = new BayesNet();
@@ -260,8 +201,12 @@ bn.add(maryCallsNode);
 bn.add(burglaryNode);
 bn.add(earthquakeNode);
 
-const X = 'Alarm'; // Variável para a qual deseja estimar a distribuição de probabilidade
-const e = { maryCallsNode: true }; // Evidência fornecida
-
-const resultado = likelihood_weighting(X, e, bn);
-console.log(resultado);
+const X = "Alarm";
+const e = {
+  Burglary: "false ",
+  Earthquake: "false ",
+  MaryCalls: "false ",
+  JohnCalls: "false ",
+};
+const resultado = likelihood_weighting(X, e, bn, 1000000);
+console.log("true:", resultado[0], ",false:", resultado[1]);
