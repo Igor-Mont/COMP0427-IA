@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /*
- * Types for implementing boolean decision trees.
+ * Types for implementing discrete decision trees.
  */
 
 import * as utils from "../utils.mjs";
@@ -10,9 +10,8 @@ import * as utils from "../utils.mjs";
  */
 class DecisionFork {
   // Specify for which attribute this node is for.
-  constructor(attr, attrName = null, defaultChild = null, branches = null) {
+  constructor(attr, defaultChild = null, branches = null) {
     this.attr = attr;
-    this.attrName = attrName ?? attr;
     this.defaultChild = defaultChild;
     this.branches = branches ?? new Map();
   }
@@ -21,7 +20,6 @@ class DecisionFork {
   classify(example) {
     let attrVal = example[this.attr];
     if (utils.isIn(attrVal, this.branches.keys())) {
-      // TODO: check the type of this.
       return this.branches.get(attrVal).call(example);
     } else {
       return this.defaultChild(example);
@@ -71,7 +69,6 @@ export class DecisionTreeLearner {
     let A = this.chooseAttribute(attrs, examples);
     let tree = new DecisionFork(
       A,
-      this.dataset.attrNames[A],
       this.pluralityValue(examples)
     );
 
@@ -121,7 +118,7 @@ export class DecisionTreeLearner {
 
     let n = examples.length;
     let entropies = [];
-    for (const [v, e] of this.splitBy(attr, examples)) {
+    for (const [, e] of this.splitBy(attr, examples)) {
       let entropy = (e.length / n) * I(e);
       entropies.push(entropy);
     }

@@ -185,6 +185,21 @@ export function remove(x, xs) {
   xs.splice(i, 1);
 }
 
+export function euclideanDist(x, y) {
+  let diffs = [];
+  for (const [_x, _y] of zip(x, y))
+    if (typeof _x === "number" && typeof _y === "number")
+      diffs.push((_x - _y) ** 2);
+  return Math.sqrt(sum(diffs));
+} 
+
+// Cada elemento de s2 é adicionado a s1.
+export function union(s1, s2) {
+  if (s1 instanceof Set)
+    for (const e of s2)
+      s1.add(e);
+}
+
 // ----------------------------------------------------------------------------
 // Probabilidade e outras utils matemáticas.
 // ----------------------------------------------------------------------------

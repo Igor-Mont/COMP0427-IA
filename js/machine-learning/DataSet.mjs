@@ -7,11 +7,9 @@ export class DataSet {
   constructor({
     examples = null,
     attrs = null,
-    attrNames = null,
     name = "",
     target = -1,
     inputs = null,
-    exclude = [],
   }) {
     this.name = name;
 
@@ -31,14 +29,7 @@ export class DataSet {
     }
     this.attrs = attrs;
 
-    // Initialize attrNames from string/list.
-    if (typeof attrNames === "string") {
-      this.attrNames = attrNames.split();
-    } else {
-      this.attrNames = attrNames ?? attrs;
-    }
-
-    this.setProblem(target, inputs, exclude);
+    this.setProblem(target, inputs);
   }
 
   /*
@@ -46,24 +37,17 @@ export class DataSet {
    * inputs is a list of attributes.
    * exclude is a list of attributes to not be used on inputs.
    */
-  setProblem(target, inputs = null, exclude = []) {
+  setProblem(target, inputs = null) {
     this.target = this.attrNum(target);
-    exclude = exclude.map(this.attrNum);
     if (inputs) {
       this.inputs = utils.removeAll(this.target, inputs);
     } else {
-      this.inputs = this.attrs.filter(
-        (a) => a != this.target && !exclude.includes(a)
-      );
+      this.inputs = this.attrs.filter(a => a != this.target);
     }
 
     if (!this.values) {
       this.updateValues();
     }
-  }
-
-  addExample(example) {
-    this.examples.push(example);
   }
 
   // Returns the number used for attr, which is either a string or number.
