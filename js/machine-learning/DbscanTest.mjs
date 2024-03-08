@@ -34,7 +34,7 @@ function testIris() {
 function testSimple() {
   // Should detect two clusters:
   // 1 - [ [ 1, 2 ], [ 1, 2 ], [ 2, 2 ], [ 2, 3 ] ]
-  // 2 -[ [ 8, 7 ], [ 8, 7 ], [ 8, 8 ] ]
+  // 2 - [ [ 8, 7 ], [ 8, 7 ], [ 8, 8 ] ]
   // The last point is an outlier.
   let X = new DataSet({ examples: [[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]]});
   let [eps, minPts] = [3, 2];
